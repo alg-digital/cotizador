@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALG — Cotizador</title>
+<link href="https://api.fontshare.com/v2/css?f[]=monument-grotesk@400,500,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:       #0f1117;
+    --ink-mid:   #3a3d4a;
+    --ink-soft:  #7a7f94;
+    --paper:     #f8f7f4;
+    --paper-2:   #efeee9;
+    --paper-3:   #e3e1d8;
+    --accent:    #1a3a8f;
+    --accent-2:  #e8312a;
+    --gold:      #c8972a;
+    --green:     #1a6b3c;
+    --green-bg:  #e8f4ed;
+    --red-bg:    #fdf0ef;
+    --mono:      'DM Mono', monospace;
+    --serif:     'Monument Grotesk', 'DM Mono', sans-serif;
+    --sans:      'Monument Grotesk', sans-serif;
+    --radius:    6px;
+    --shadow:    0 2px 12px rgba(15,17,23,.08);
+    --shadow-lg: 0 8px 40px rgba(15,17,23,.14);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; }
+  body {
+    font-family: var(--sans);
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--ink);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { font-family: var(--serif); font-size: 1.4rem; color: #fff; letter-spacing: .02em; }
+  .logo span { color: var(--gold); }
+  header nav { display: flex; gap: 6px; }
+  header nav button {
+    background: transparent; border: 1px solid rgba(255,255,255,.15);
+    color: rgba(255,255,255,.7); padding: 6px 16px; border-radius: 30px;
+    font-family: var(--sans); font-size: .8rem; cursor: pointer;
+    transition: all .2s;
+  }
+  header nav button.active, header nav button:hover {
+    background: rgba(255,255,255,.1); color: #fff; border-color: rgba(255,255,255,.4);
+  }
+
+  /* ── LAYOUT ── */
+  .app { display: grid; grid-template-columns: 1fr 360px; min-height: calc(100vh - 60px); }
+  .main { padding: 32px 40px; overflow-y: auto; }
+  .sidebar {
+    background: var(--ink); color: #fff;
+    padding: 28px 24px;
+    display: flex; flex-direction: column; gap: 0;
+    position: sticky; top: 60px; height: calc(100vh - 60px);
+    overflow-y: auto;
+  }
+
+  /* ── SECTIONS ── */
+  .section { margin-bottom: 32px; }
+  .section-title {
+    font-family: var(--serif); font-size: 1.25rem; color: var(--ink);
+    margin-bottom: 16px; padding-bottom: 8px;
+    border-bottom: 2px solid var(--ink);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title .num {
+    font-family: var(--mono); font-size: .7rem; color: var(--paper);
+    background: var(--ink); padding: 2px 8px; border-radius: 20px;
+  }
+
+  /* ── CLIENT INFO ── */
+  .client-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field-group { display: flex; flex-direction: column; gap: 4px; }
+  .field-group label { font-size: .75rem; font-weight: 600; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .06em; }
+  .field-group input, .field-group select {
+    border: 1.5px solid var(--paper-3);
+    background: #fff; border-radius: var(--radius);
+    padding: 9px 12px; font-family: var(--sans); font-size: .9rem; color: var(--ink);
+    transition: border-color .15s;
+    appearance: none; -webkit-appearance: none;
+  }
+  .field-group input:focus, .field-group select:focus { outline: none; border-color: var(--accent); }
+
+  /* ── PARAMS BAR ── */
+  .params-bar {
+    background: var(--ink); color: #fff;
+    padding: 14px 20px; border-radius: var(--radius);
+    display: flex; gap: 28px; align-items: center;
+    margin-bottom: 24px; flex-wrap: wrap;
+  }
+  .param-item { display: flex; flex-direction: column; gap: 3px; }
+  .param-item label { font-size: .65rem; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.5); }
+  .param-item input {
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.2);
+    color: #fff; font-family: var(--mono); font-size: .85rem;
+    padding: 4px 8px; border-radius: 4px; width: 90px;
+    transition: border-color .15s;
+  }
+  .param-item input:focus { outline: none; border-color: rgba(255,255,255,.6); }
+
+  /* ── SERVICES ── */
+  .services-list { display: flex; flex-direction: column; gap: 16px; }
+  .service-card {
+    background: #fff; border: 1.5px solid var(--paper-3);
+    border-radius: 8px; overflow: hidden;
+    box-shadow: var(--shadow); transition: box-shadow .2s;
+  }
+  .service-card:hover { box-shadow: var(--shadow-lg); }
+
+  .service-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px; cursor: pointer;
+    background: var(--paper-2); border-bottom: 1.5px solid var(--paper-3);
+    user-select: none;
+  }
+  .service-header:hover { background: var(--paper-3); }
+  .service-toggle {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ink); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .7rem; flex-shrink: 0; transition: transform .2s;
+  }
+  .service-card.open .service-toggle { transform: rotate(45deg); background: var(--accent-2); }
+  .service-name-input {
+    flex: 1; background: transparent; border: none;
+    font-family: var(--serif); font-size: 1rem; color: var(--ink);
+    cursor: text;
+  }
+  .service-name-input:focus { outline: none; }
+  .service-price-tag {
+    font-family: var(--mono); font-size: .8rem; color: var(--ink-soft);
+    background: var(--paper-3); padding: 3px 10px; border-radius: 20px;
+    white-space: nowrap;
+  }
+  .service-price-tag.has-value { background: var(--green-bg); color: var(--green); font-weight: 500; }
+
+  .service-body { display: none; padding: 0; }
+  .service-card.open .service-body { display: block; }
+
+  /* ── PHASE ── */
+  .phase-block { border-bottom: 1px solid var(--paper-2); }
+  .phase-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 18px; background: rgba(26,58,143,.04);
+    border-bottom: 1px solid var(--paper-2);
+  }
+  .phase-tag {
+    font-family: var(--mono); font-size: .7rem; color: var(--accent);
+    background: rgba(26,58,143,.1); padding: 2px 8px; border-radius: 4px;
+  }
+  .phase-name-input {
+    flex: 1; border: none; background: transparent;
+    font-weight: 600; font-size: .85rem; color: var(--ink);
+    font-family: var(--sans);
+  }
+  .phase-name-input:focus { outline: none; }
+  .btn-del-phase {
+    background: none; border: none; color: var(--ink-soft);
+    cursor: pointer; font-size: .8rem; padding: 2px 6px;
+    border-radius: 4px; transition: all .15s;
+  }
+  .btn-del-phase:hover { background: var(--red-bg); color: var(--accent-2); }
+
+  /* ── ACTIVITY ROWS ── */
+  .activities-table { width: 100%; }
+  .act-row {
+    display: grid;
+    grid-template-columns: 1fr 160px 72px 36px;
+    gap: 0;
+    border-bottom: 1px solid var(--paper-2);
+    transition: background .1s;
+  }
+  .act-row:hover { background: var(--paper); }
+  .act-row > * { padding: 8px 10px; border-right: 1px solid var(--paper-2); }
+  .act-row > *:last-child { border-right: none; }
+
+  .act-desc {
+    border: none; background: transparent;
+    font-family: var(--sans); font-size: .85rem; color: var(--ink);
+    resize: none; min-height: 34px; width: 100%;
+  }
+  .act-desc:focus { outline: none; }
+  .act-select {
+    border: none; background: transparent;
+    font-size: .8rem; color: var(--ink-mid); width: 100%;
+    appearance: none; -webkit-appearance: none; cursor: pointer;
+    font-family: var(--sans);
+  }
+  .act-select:focus { outline: none; }
+  .act-hrs {
+    border: none; background: transparent;
+    font-family: var(--mono); font-size: .85rem; color: var(--ink);
+    text-align: right; width: 100%;
+  }
+  .act-hrs:focus { outline: none; }
+  .btn-del-act {
+    background: none; border: none; color: var(--paper-3);
+    cursor: pointer; font-size: .9rem; display: flex;
+    align-items: center; justify-content: center;
+    transition: color .15s;
+  }
+  .btn-del-act:hover { color: var(--accent-2); }
+
+  .act-header-row {
+    display: grid;
+    grid-template-columns: 1fr 160px 72px 36px;
+    background: var(--paper-2);
+    border-bottom: 1px solid var(--paper-3);
+  }
+  .act-header-row span {
+    padding: 5px 10px; font-size: .65rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft);
+    border-right: 1px solid var(--paper-3);
+  }
+  .act-header-row span:last-child { border-right: none; }
+
+  .phase-footer {
+    display: flex; gap: 8px; padding: 8px 14px;
+    background: rgba(26,58,143,.02);
+  }
+  .btn-add-act {
+    font-size: .75rem; color: var(--accent); background: rgba(26,58,143,.06);
+    border: 1px dashed rgba(26,58,143,.3); border-radius: 4px;
+    padding: 4px 12px; cursor: pointer; font-family: var(--sans);
+    transition: all .15s;
+  }
+  .btn-add-act:hover { background: rgba(26,58,143,.12); }
+
+  .service-footer {
+    display: flex; gap: 10px; padding: 12px 18px;
+    border-top: 1px solid var(--paper-2); background: var(--paper);
+    flex-wrap: wrap; align-items: center;
+  }
+  .btn-add-phase {
+    font-size: .8rem; color: var(--accent); background: transparent;
+    border: 1.5px dashed rgba(26,58,143,.4); border-radius: 6px;
+    padding: 7px 16px; cursor: pointer; font-family: var(--sans);
+    transition: all .15s; display: flex; align-items: center; gap: 6px;
+  }
+  .btn-add-phase:hover { background: rgba(26,58,143,.06); }
+  .btn-del-service {
+    margin-left: auto; font-size: .75rem; color: var(--ink-soft);
+    background: transparent; border: 1px solid var(--paper-3);
+    border-radius: 4px; padding: 6px 12px; cursor: pointer; font-family: var(--sans);
+    transition: all .15s;
+  }
+  .btn-del-service:hover { border-color: var(--accent-2); color: var(--accent-2); }
+
+  .btn-add-service {
+    display: flex; align-items: center; gap: 10px;
+    border: 2px dashed var(--paper-3); border-radius: 8px;
+    padding: 16px 20px; color: var(--ink-soft);
+    background: transparent; cursor: pointer; font-family: var(--sans);
+    font-size: .9rem; transition: all .2s; width: 100%;
+    margin-top: 4px;
+  }
+  .btn-add-service:hover { border-color: var(--accent); color: var(--accent); background: rgba(26,58,143,.03); }
+
+  /* ── SIDEBAR ── */
+  .sidebar-title {
+    font-family: var(--serif); font-size: 1.1rem; color: #fff;
+    margin-bottom: 20px; padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+  }
+
+  .summary-block { margin-bottom: 20px; }
+  .summary-block-title {
+    font-size: .65rem; text-transform: uppercase; letter-spacing: .1em;
+    color: rgba(255,255,255,.4); margin-bottom: 10px;
+  }
+  .summary-line {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+  .summary-line .lbl { font-size: .8rem; color: rgba(255,255,255,.65); }
+  .summary-line .val { font-family: var(--mono); font-size: .85rem; color: #fff; }
+  .summary-line.total .lbl { font-weight: 700; color: #fff; font-size: .9rem; }
+  .summary-line.total .val { font-size: 1rem; color: var(--gold); }
+  .summary-line.subtl .lbl { color: rgba(255,255,255,.4); font-size: .75rem; }
+  .summary-line.subtl .val { font-size: .78rem; color: rgba(255,255,255,.5); }
+
+  .service-summary-item {
+    padding: 8px 10px; border-radius: 6px;
+    background: rgba(255,255,255,.05); margin-bottom: 6px;
+  }
+  .ssi-name { font-size: .8rem; color: rgba(255,255,255,.8); margin-bottom: 4px; }
+  .ssi-row { display: flex; justify-content: space-between; }
+  .ssi-hrs { font-size: .72rem; color: rgba(255,255,255,.4); font-family: var(--mono); }
+  .ssi-price { font-size: .82rem; color: var(--gold); font-family: var(--mono); }
+
+  /* Params in sidebar */
+  .sidebar-params { margin-bottom: 20px; }
+  .sp-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .sp-item { flex: 1; }
+  .sp-item label { font-size: .65rem; color: rgba(255,255,255,.4); display: block; margin-bottom: 3px; text-transform: uppercase; letter-spacing: .06em; }
+  .sp-item input {
+    width: 100%; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.15);
+    color: #fff; font-family: var(--mono); font-size: .85rem;
+    padding: 6px 8px; border-radius: 4px;
+  }
+  .sp-item input:focus { outline: none; border-color: var(--gold); }
+
+  /* discount & payment */
+  .dcto-row { display: flex; gap: 8px; align-items: center; margin: 10px 0; }
+  .dcto-row label { font-size: .75rem; color: rgba(255,255,255,.6); flex: 1; }
+  .dcto-row input {
+    width: 70px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.15);
+    color: #fff; font-family: var(--mono); font-size: .85rem;
+    padding: 5px 8px; border-radius: 4px; text-align: right;
+  }
+  .dcto-row input:focus { outline: none; border-color: var(--gold); }
+
+  .final-price-box {
+    background: var(--gold); color: var(--ink);
+    border-radius: 8px; padding: 16px;
+    margin: 16px 0; text-align: center;
+  }
+  .fpb-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; opacity: .7; }
+  .fpb-val { font-family: var(--serif); font-size: 1.8rem; margin: 4px 0; }
+  .fpb-sub { font-size: .72rem; opacity: .65; }
+
+  /* Payment plan */
+  .payment-plan { margin-top: 12px; }
+  .pp-title { font-size: .65rem; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.4); margin-bottom: 8px; }
+  .pp-options { display: flex; gap: 6px; margin-bottom: 10px; }
+  .pp-btn {
+    flex: 1; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.15);
+    color: rgba(255,255,255,.6); padding: 6px 4px; border-radius: 4px;
+    font-size: .72rem; cursor: pointer; font-family: var(--sans); transition: all .15s;
+    text-align: center;
+  }
+  .pp-btn.active { background: rgba(200,151,42,.2); border-color: var(--gold); color: var(--gold); }
+  .pp-result {
+    background: rgba(255,255,255,.05); border-radius: 6px;
+    padding: 12px; display: flex; flex-direction: column; gap: 6px;
+  }
+  .pp-item { display: flex; justify-content: space-between; }
+  .pp-item .k { font-size: .75rem; color: rgba(255,255,255,.5); }
+  .pp-item .v { font-family: var(--mono); font-size: .8rem; color: #fff; }
+
+  /* Team breakdown */
+  .team-breakdown { margin-top: 16px; }
+  .tb-title { font-size: .65rem; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.4); margin-bottom: 8px; }
+  .tb-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
+  .tb-name { font-size: .78rem; color: rgba(255,255,255,.7); }
+  .tb-hrs { font-family: var(--mono); font-size: .75rem; color: rgba(255,255,255,.45); }
+
+  /* Export button */
+  .btn-export {
+    width: 100%; margin-top: 16px;
+    background: #fff; color: var(--ink); border: none;
+    padding: 12px; border-radius: 6px; font-family: var(--sans);
+    font-size: .85rem; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all .2s;
+  }
+  .btn-export:hover { background: var(--gold); }
+
+  /* ── PRINT / PDF ── */
+  @media print {
+    header, .sidebar { display: none !important; }
+    .app { display: block; }
+    .main { padding: 20px; }
+    .service-body { display: block !important; }
+  }
+
+  /* ── UTIL ── */
+  .mono { font-family: var(--mono); }
+  .tag {
+    display: inline-block; font-size: .7rem; padding: 2px 8px;
+    border-radius: 20px; font-weight: 600;
+  }
+  .tag.green { background: var(--green-bg); color: var(--green); }
+  .tag.red { background: var(--red-bg); color: var(--accent-2); }
+
+  select option { font-family: var(--sans); }
+
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  /* Special blocks: juntas & outsourcing */
+  .special-block {
+    border-top: 2px solid var(--paper-2);
+    background: var(--paper);
+  }
+  .special-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 18px; border-bottom: 1px solid var(--paper-2);
+  }
+  .special-tag {
+    font-size: .68rem; font-weight: 700; padding: 3px 9px;
+    border-radius: 20px; white-space: nowrap; letter-spacing: .04em;
+  }
+  .juntas-tag  { background: #e8f0fe; color: #1a3a8f; }
+  .outsrc-tag  { background: #fef3e2; color: #b45309; }
+  .special-label { font-weight: 600; font-size: .85rem; color: var(--ink); }
+  .special-note  { font-size: .72rem; color: var(--ink-soft); margin-left: auto; font-style: italic; }
+
+  .juntas-block .act-row { grid-template-columns: 1fr 140px 72px 36px; }
+
+  .outsrc-row { grid-template-columns: 1fr 200px 120px 36px !important; }
+  .outsrc-cost-wrap, .outsrc-markup-wrap {
+    display: flex; align-items: center; gap: 4px;
+    padding: 6px 8px; border-right: 1px solid var(--paper-2);
+    flex-wrap: wrap;
+  }
+  .outsrc-label { font-size: .68rem; color: var(--ink-soft); width: 100%; }
+  .outsrc-input { flex: 1; min-width: 80px; }
+
+  .btn-add-special {
+    font-size: .75rem; color: #1a3a8f; background: rgba(26,58,143,.06);
+    border: 1px dashed rgba(26,58,143,.3); border-radius: 4px;
+    padding: 6px 12px; cursor: pointer; font-family: var(--sans);
+    transition: all .15s;
+  }
+  .btn-add-special:hover { background: rgba(26,58,143,.12); }
+  .btn-add-special.outsrc { color: #b45309; background: rgba(180,83,9,.06); border-color: rgba(180,83,9,.3); }
+  .btn-add-special.outsrc:hover { background: rgba(180,83,9,.12); }
+
+  /* Subtle fade-in */
+  @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+  .service-card { animation: fadeUp .25s ease both; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">ALG <span>·</span> Cotizador</div>
+  <nav>
+    <button class="active" onclick="showTab('builder')">Constructor</button>
+    <button onclick="showTab('breakdown')">Desglose</button>
+  </nav>
+</header>
+
+<div class="app" id="app-builder">
+  <!-- ── MAIN ── -->
+  <main class="main" id="main-content">
+
+    <!-- Client Info -->
+    <div class="section">
+      <div class="section-title"><span class="num">01</span> Información del proyecto</div>
+      <div class="client-grid">
+        <div class="field-group">
+          <label>Cliente</label>
+          <input type="text" id="f-cliente" placeholder="Nombre del cliente" oninput="refreshSidebar()">
+        </div>
+        <div class="field-group">
+          <label>Proyecto</label>
+          <input type="text" id="f-proyecto" placeholder="Nombre del proyecto" oninput="refreshSidebar()">
+        </div>
+        <div class="field-group">
+          <label>Fecha</label>
+          <input type="date" id="f-fecha" oninput="refreshSidebar()">
+        </div>
+        <div class="field-group">
+          <label>Preparado por</label>
+          <input type="text" id="f-prep" placeholder="Tu nombre" oninput="refreshSidebar()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Services -->
+    <div class="section">
+      <div class="section-title"><span class="num">02</span> Servicios y entregables</div>
+      <div class="services-list" id="services-list"></div>
+      <button class="btn-add-service" onclick="addService()">
+        <span style="font-size:1.2rem">＋</span> Agregar servicio
+      </button>
+    </div>
+
+  </main>
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-title">Resumen de cotización</div>
+
+    <!-- Parámetros -->
+    <div class="sidebar-params">
+      <div class="summary-block-title">Parámetros</div>
+      <div class="sp-row">
+        <div class="sp-item">
+          <label>Overhead ALG</label>
+          <input type="number" id="p-overhead" value="1.5" step="0.05" min="1" oninput="refreshSidebar()">
+        </div>
+        <div class="sp-item">
+          <label>Factor util.</label>
+          <input type="number" id="p-util" value="0.5" step="0.05" min="0" max="1" oninput="refreshSidebar()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Service summaries -->
+    <div class="summary-block" id="sb-services">
+      <div class="summary-block-title">Por servicio</div>
+      <div id="sb-services-list"></div>
+    </div>
+
+    <!-- Totals -->
+    <div class="summary-block">
+      <div class="summary-block-title">Totales</div>
+      <div class="summary-line">
+        <span class="lbl">Total horas</span>
+        <span class="val" id="sb-hrs">0 hrs</span>
+      </div>
+      <div class="summary-line">
+        <span class="lbl">Costo total ALG</span>
+        <span class="val" id="sb-costo">$0</span>
+      </div>
+      <div class="summary-line">
+        <span class="lbl">Precio s/descuento</span>
+        <span class="val" id="sb-precio-lleno">$0</span>
+      </div>
+    </div>
+
+    <!-- Descuentos -->
+    <div class="summary-block">
+      <div class="summary-block-title">Descuento</div>
+      <div class="dcto-row">
+        <label>Descuento global</label>
+        <input type="number" id="p-dcto" value="10" min="0" max="100" step="1" oninput="refreshSidebar()">
+        <span style="font-size:.8rem;color:rgba(255,255,255,.5)">%</span>
+      </div>
+      <div class="dcto-row">
+        <label>Dcto. adicional</label>
+        <input type="number" id="p-dcto2" value="0" min="0" max="100" step="1" oninput="refreshSidebar()">
+        <span style="font-size:.8rem;color:rgba(255,255,255,.5)">%</span>
+      </div>
+    </div>
+
+    <!-- Final price -->
+    <div class="final-price-box">
+      <div class="fpb-label">Precio final</div>
+      <div class="fpb-val" id="sb-final">$0</div>
+      <div class="fpb-sub" id="sb-utilidad">Utilidad: $0 · 0%</div>
+    </div>
+
+    <!-- Payment plan -->
+    <div class="payment-plan">
+      <div class="pp-title">Plan de pagos</div>
+      <div class="pp-options" id="pp-options">
+        <button class="pp-btn active" onclick="setPP(1)" id="pp1">1 pago</button>
+        <button class="pp-btn" onclick="setPP(2)" id="pp2">2 pagos</button>
+        <button class="pp-btn" onclick="setPP(3)" id="pp3">3 pagos</button>
+        <button class="pp-btn" onclick="setPP(6)" id="pp6">6 pagos</button>
+        <button class="pp-btn" onclick="setPP(12)" id="pp12">12 pagos</button>
+      </div>
+      <div class="pp-result" id="pp-result">
+        <div class="pp-item"><span class="k">Precio total</span><span class="v" id="pp-total">$0</span></div>
+        <div class="pp-item"><span class="k">No. de pagos</span><span class="v" id="pp-n">1</span></div>
+        <div class="pp-item" id="pp-disc-row">
+          <span class="k">Dcto. pago único (5%)</span>
+          <span class="v" id="pp-disc">$0</span>
+        </div>
+        <div class="pp-item" style="border-top:1px solid rgba(255,255,255,.1);padding-top:6px;margin-top:2px">
+          <span class="k" style="color:#fff;font-weight:600">Monto por pago</span>
+          <span class="v" style="color:var(--gold);font-weight:700" id="pp-monto">$0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Team breakdown -->
+    <div class="team-breakdown">
+      <div class="tb-title">Horas por persona</div>
+      <div id="tb-list"></div>
+    </div>
+
+    <button class="btn-export" onclick="exportPDF()">⬇ Exportar resumen PDF</button>
+  </aside>
+</div>
+
+<!-- ── BREAKDOWN VIEW ── -->
+<div id="app-breakdown" style="display:none; padding:32px 40px; max-width:900px; margin:0 auto;">
+  <h2 style="font-family:var(--sans);font-weight:700;font-size:1.6rem;margin-bottom:24px;">Desglose detallado</h2>
+  <div id="breakdown-content"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════════
+const TEAM = [
+  { id:1,  name:"NC",         sueldo:90000 },
+  { id:2,  name:"Jesus ALG",  sueldo:30000 },
+  { id:3,  name:"Santiago",   sueldo:30000 },
+  { id:4,  name:"INGRID",     sueldo:20000 },
+  { id:7,  name:"Roberto",    sueldo:20000 },
+  { id:8,  name:"Alfredo",    sueldo:20000 },
+  { id:10, name:"Ana",        sueldo:20000 },
+  { id:11, name:"JUNTAS**",   sueldo:30000 },
+  { id:12, name:"Rocio",      sueldo:20000 },
+  { id:13, name:"Kathia",     sueldo:17000 },
+  { id:14, name:"Gamaliel",   sueldo:14000 },
+  { id:15, name:"Com. MGR.",  sueldo:15000 },
+  { id:16, name:"CARMINA",    sueldo:16500 },
+  { id:17, name:"Copy 2",     sueldo:15000 },
+  { id:18, name:"Isaac",      sueldo:14000 },
+  { id:99, name:"Outsourcing",sueldo:0 },
+];
+const FACTOR = 1/20/6;   // horas efectivas por peso de sueldo
+const getRate = id => {
+  const m = TEAM.find(t => t.id === id);
+  return m ? m.sueldo * FACTOR : 0;
+};
+
+let services = [];
+let ppMonths = 1;
+let svcCounter = 0;
+let phaseCounter = 0;
+let actCounter = 0;
+
+// ══════════════════════════════════════════════════════
+// STATE HELPERS
+// ══════════════════════════════════════════════════════
+function addService(name='') {
+  const id = ++svcCounter;
+  services.push({
+    id, name: name || `Servicio ${id}`,
+    phases: []
+  });
+  renderServices();
+  addPhase(id, 'Fase 1A');
+  refreshSidebar();
+}
+
+function addPhase(svcId, name='') {
+  const svc = services.find(s => s.id === svcId);
+  if (!svc) return;
+  const id = ++phaseCounter;
+  svc.phases.push({ id, name: name || `Fase ${svc.phases.length+1}`, activities: [] });
+  renderServices();
+  addActivity(svcId, id);
+  refreshSidebar();
+}
+
+function addActivity(svcId, phaseId) {
+  const svc = services.find(s => s.id === svcId);
+  if (!svc) return;
+  const ph = svc.phases.find(p => p.id === phaseId);
+  if (!ph) return;
+  const id = ++actCounter;
+  ph.activities.push({ id, type:'normal', desc:'', memberId: 3, hrs: 0 });
+  renderServices();
+  refreshSidebar();
+}
+
+function addJuntas(svcId) {
+  const svc = services.find(s => s.id === svcId);
+  if (!svc) return;
+  // Add to first phase or create a special one
+  if (!svc._juntasId) {
+    const id = ++actCounter;
+    svc._juntas = { id, type:'juntas', desc:'Meetings / Project Overhead', hrs: 0 };
+  }
+  svc._showJuntas = true;
+  renderServices();
+  refreshSidebar();
+}
+
+function addOutsourcing(svcId) {
+  const svc = services.find(s => s.id === svcId);
+  if (!svc) return;
+  if (!svc._outsourcing) svc._outsourcing = [];
+  const id = ++actCounter;
+  svc._outsourcing.push({ id, type:'outsourcing', desc:'', costo: 0, markup: 0.25 });
+  svc._showOutsourcing = true;
+  renderServices();
+  refreshSidebar();
+}
+
+function delJuntas(svcId) {
+  const svc = services.find(s => s.id === svcId);
+  if (!svc) return;
+  svc._showJuntas = false;
+  svc._juntas = null;
+  renderServices(); refreshSidebar();
+}
+
+function delOutsourcing(svcId, actId) {
+  const svc = services.find(s => s.id === svcId);
+  if (!svc) return;
+  svc._outsourcing = (svc._outsourcing||[]).filter(o => o.id !== actId);
+  renderServices(); refreshSidebar();
+}
+
+function updateJuntas(svcId, field, value) {
+  const svc = services.find(s => s.id === svcId);
+  if (!svc || !svc._juntas) return;
+  if (field === 'hrs') svc._juntas.hrs = parseFloat(value)||0;
+  if (field === 'desc') svc._juntas.desc = value;
+  refreshSidebar();
+}
+
+function updateOutsourcing(svcId, actId, field, value) {
+  const svc = services.find(s => s.id === svcId);
+  if (!svc) return;
+  const o = (svc._outsourcing||[]).find(x => x.id === actId);
+  if (!o) return;
+  if (field === 'costo') o.costo = parseFloat(value)||0;
+  if (field === 'desc') o.desc = value;
+  if (field === 'markup') o.markup = parseFloat(value)||0.25;
+  refreshSidebar();
+}
+
+function deleteService(svcId) {
+  services = services.filter(s => s.id !== svcId);
+  renderServices();
+  refreshSidebar();
+}
+
+function deletePhase(svcId, phaseId) {
+  const svc = services.find(s => s.id === svcId);
+  if (!svc) return;
+  svc.phases = svc.phases.filter(p => p.id !== phaseId);
+  renderServices();
+  refreshSidebar();
+}
+
+function deleteActivity(svcId, phaseId, actId) {
+  const svc = services.find(s => s.id === svcId);
+  if (!svc) return;
+  const ph = svc.phases.find(p => p.id === phaseId);
+  if (!ph) return;
+  ph.activities = ph.activities.filter(a => a.id !== actId);
+  renderServices();
+  refreshSidebar();
+}
+
+function updateField(svcId, phaseId, actId, field, value) {
+  const svc = services.find(s => s.id === svcId);
+  if (!svc) return;
+  if (field === 'svcName') { svc.name = value; refreshSidebar(); return; }
+  const ph = svc.phases.find(p => p.id === phaseId);
+  if (!ph) return;
+  if (field === 'phaseName') { ph.name = value; return; }
+  const act = ph.activities.find(a => a.id === actId);
+  if (!act) return;
+  if (field === 'hrs') act.hrs = parseFloat(value) || 0;
+  if (field === 'desc') act.desc = value;
+  if (field === 'member') act.memberId = parseInt(value);
+  refreshSidebar();
+}
+
+// ══════════════════════════════════════════════════════
+// CALCULATIONS
+// ══════════════════════════════════════════════════════
+function getParams() {
+  return {
+    overhead: parseFloat(document.getElementById('p-overhead').value) || 1.5,
+    util:     parseFloat(document.getElementById('p-util').value) || 0.5,
+    dcto:     (parseFloat(document.getElementById('p-dcto').value) || 0) / 100,
+    dcto2:    (parseFloat(document.getElementById('p-dcto2').value) || 0) / 100,
+  };
+}
+
+function calcActivity(act, params) {
+  // OUTSOURCING: input = costo proveedor en $, markup fijo 25%
+  if (act.type === 'outsourcing') {
+    const costoDir   = act.costo || 0;
+    const overhead   = costoDir * (act.markup || 0.25);
+    const costoTotal = costoDir + overhead;
+    const markup     = act.markup || 0.25;
+    const precioLleno    = markup < 1 ? costoTotal / (1 - markup) : costoTotal;
+    const precioDescuento = precioLleno * (1 - params.dcto);
+    return { costoDir, overhead, costoTotal, precioLleno, precioDescuento };
+  }
+  // JUNTAS: horas × tarifa JUNTAS** (ID=11) × overhead normal × factor util normal
+  if (act.type === 'juntas') {
+    const rate       = getRate(11);   // JUNTAS** siempre ID=11
+    const costoDir   = act.hrs * rate;
+    const overhead   = costoDir * params.overhead;
+    const costoTotal = costoDir + overhead;
+    const precioLleno    = params.util > 0 ? costoTotal / (1 - params.util) : costoTotal * 2;
+    const precioDescuento = precioLleno * (1 - params.dcto);
+    return { costoDir, overhead, costoTotal, precioLleno, precioDescuento };
+  }
+  // ACTIVIDAD NORMAL
+  const rate = getRate(act.memberId);
+  const costoDir = act.hrs * rate;
+  const overhead = costoDir * params.overhead;
+  const costoTotal = costoDir + overhead;
+  const precioLleno = params.util > 0 ? costoTotal / (1 - params.util) : costoTotal * 2;
+  const precioDescuento = precioLleno * (1 - params.dcto);
+  return { costoDir, overhead, costoTotal, precioLleno, precioDescuento };
+}
+
+function calcService(svc, params) {
+  let hrs=0, costoTotal=0, precioLleno=0, precioDescuento=0;
+  svc.phases.forEach(ph => ph.activities.forEach(act => {
+    const c = calcActivity(act, params);
+    hrs += act.hrs||0;
+    costoTotal += c.costoTotal;
+    precioLleno += c.precioLleno;
+    precioDescuento += c.precioDescuento;
+  }));
+  // Juntas
+  if (svc._showJuntas && svc._juntas) {
+    const c = calcActivity(svc._juntas, params);
+    hrs += svc._juntas.hrs||0;
+    costoTotal += c.costoTotal;
+    precioLleno += c.precioLleno;
+    precioDescuento += c.precioDescuento;
+  }
+  // Outsourcing
+  (svc._outsourcing||[]).forEach(o => {
+    const c = calcActivity(o, params);
+    costoTotal += c.costoTotal;
+    precioLleno += c.precioLleno;
+    precioDescuento += c.precioDescuento;
+  });
+  return { hrs, costoTotal, precioLleno, precioDescuento };
+}
+
+function calcTotal(params) {
+  let hrs=0, costoTotal=0, precioLleno=0, precioDescuento=0;
+  services.forEach(svc => {
+    const c = calcService(svc, params);
+    hrs += c.hrs;
+    costoTotal += c.costoTotal;
+    precioLleno += c.precioLleno;
+    precioDescuento += c.precioDescuento;
+  });
+  const precioFinal = precioDescuento * (1 - params.dcto2);
+  const utilidad = precioFinal - costoTotal;
+  const pctUtil = precioFinal > 0 ? utilidad / precioFinal : 0;
+  return { hrs, costoTotal, precioLleno, precioDescuento, precioFinal, utilidad, pctUtil };
+}
+
+function teamBreakdown(params) {
+  const map = {};
+  services.forEach(svc => {
+    svc.phases.forEach(ph => ph.activities.forEach(act => {
+      const m = TEAM.find(t => t.id === act.memberId);
+      const name = m ? m.name : 'Desconocido';
+      map[name] = (map[name] || 0) + (act.hrs||0);
+    }));
+    if (svc._showJuntas && svc._juntas && svc._juntas.hrs > 0) {
+      map['JUNTAS**'] = (map['JUNTAS**'] || 0) + svc._juntas.hrs;
+    }
+  });
+  return Object.entries(map).filter(([,h])=>h>0).sort((a,b)=>b[1]-a[1]);
+}
+
+// ══════════════════════════════════════════════════════
+// FORMAT
+// ══════════════════════════════════════════════════════
+const fmt = n => '$' + n.toLocaleString('es-MX', {minimumFractionDigits:0, maximumFractionDigits:0});
+const fmtPct = n => (n*100).toFixed(1) + '%';
+
+// ══════════════════════════════════════════════════════
+// RENDER SERVICES
+// ══════════════════════════════════════════════════════
+function buildTeamOptions(selected) {
+  return TEAM.map(m =>
+    `<option value="${m.id}" ${m.id===selected?'selected':''}>${m.name}</option>`
+  ).join('');
+}
+
+function renderServices() {
+  const container = document.getElementById('services-list');
+  container.innerHTML = '';
+  services.forEach(svc => {
+    const params = getParams();
+    const sc = calcService(svc, params);
+    const hasVal = sc.precioDescuento > 0;
+
+    const card = document.createElement('div');
+    card.className = 'service-card';
+    card.id = `svc-${svc.id}`;
+
+    let phasesHTML = svc.phases.map(ph => {
+      let actsHTML = ph.activities.map(act => `
+        <div class="act-row" id="act-${act.id}">
+          <textarea class="act-desc" rows="1" placeholder="Actividad / Entregable…"
+            oninput="updateField(${svc.id},${ph.id},${act.id},'desc',this.value)"
+          >${act.desc}</textarea>
+          <select class="act-select"
+            onchange="updateField(${svc.id},${ph.id},${act.id},'member',this.value)">
+            ${buildTeamOptions(act.memberId)}
+          </select>
+          <input type="number" class="act-hrs" placeholder="0" min="0" step="0.5"
+            value="${act.hrs||''}"
+            oninput="updateField(${svc.id},${ph.id},${act.id},'hrs',this.value)">
+          <button class="btn-del-act" onclick="deleteActivity(${svc.id},${ph.id},${act.id})" title="Eliminar">×</button>
+        </div>
+      `).join('');
+
+      return `
+        <div class="phase-block" id="phase-${ph.id}">
+          <div class="phase-header">
+            <span class="phase-tag">${ph.name.slice(0,6) || 'FASE'}</span>
+            <input class="phase-name-input" type="text" value="${ph.name}"
+              oninput="updateField(${svc.id},${ph.id},null,'phaseName',this.value)">
+            <button class="btn-del-phase" onclick="deletePhase(${svc.id},${ph.id})" title="Eliminar fase">✕</button>
+          </div>
+          <div class="act-header-row">
+            <span>Actividad / Entregable</span>
+            <span>Responsable</span>
+            <span>Hrs</span>
+            <span></span>
+          </div>
+          <div class="activities-table">${actsHTML}</div>
+          <div class="phase-footer">
+            <button class="btn-add-act" onclick="addActivity(${svc.id},${ph.id})">＋ Actividad</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    card.innerHTML = `
+      <div class="service-header" onclick="toggleService(${svc.id}, event)">
+        <div class="service-toggle">+</div>
+        <input class="service-name-input" type="text" value="${svc.name}"
+          placeholder="Nombre del servicio"
+          oninput="updateField(${svc.id},null,null,'svcName',this.value)"
+          onclick="event.stopPropagation()">
+        <span class="service-price-tag ${hasVal?'has-value':''}">
+          ${hasVal ? fmt(sc.precioDescuento) : '— sin horas'}
+        </span>
+      </div>
+      <div class="service-body">
+        ${phasesHTML}
+        ${buildJuntasHTML(svc)}
+      ${buildOutsourcingHTML(svc)}
+      <div class="service-footer">
+          <button class="btn-add-phase" onclick="addPhase(${svc.id})">＋ Agregar fase</button>
+          <button class="btn-add-special" onclick="addJuntas(${svc.id})" ${svc._showJuntas?'style="display:none"':''}>⏱ + Juntas</button>
+          <button class="btn-add-special outsrc" onclick="addOutsourcing(${svc.id})">📦 + Proveedor</button>
+          <button class="btn-del-service" onclick="deleteService(${svc.id})">✕ Eliminar servicio</button>
+        </div>
+      </div>`;
+
+    container.appendChild(card);
+
+    // restore open state
+    if (svc._open) card.classList.add('open');
+  });
+}
+
+function buildJuntasHTML(svc) {
+  if (!svc._showJuntas || !svc._juntas) return '';
+  const j = svc._juntas;
+  return `
+    <div class="special-block juntas-block">
+      <div class="special-header">
+        <span class="special-tag juntas-tag">⏱ JUNTAS</span>
+        <span class="special-label">Meetings / Project Overhead</span>
+        <span class="special-note">Tarifa: JUNTAS** · mismo cálculo que actividad</span>
+        <button class="btn-del-phase" onclick="delJuntas(${svc.id})">✕</button>
+      </div>
+      <div class="act-header-row">
+        <span>Descripción</span><span>Responsable</span><span>Hrs</span><span></span>
+      </div>
+      <div class="act-row">
+        <textarea class="act-desc" rows="1" placeholder="Descripción de las juntas…"
+          oninput="updateJuntas(${svc.id},'desc',this.value)">${j.desc}</textarea>
+        <div style="padding:8px 10px;font-size:.8rem;color:var(--ink-soft);border-right:1px solid var(--paper-2)">JUNTAS**</div>
+        <input type="number" class="act-hrs" placeholder="0" min="0" step="0.5"
+          value="${j.hrs||''}"
+          oninput="updateJuntas(${svc.id},'hrs',this.value)">
+        <div style="border-right:none"></div>
+      </div>
+    </div>`;
+}
+
+function buildOutsourcingHTML(svc) {
+  if (!svc._outsourcing || svc._outsourcing.length === 0) return '';
+  const rows = svc._outsourcing.map(o => `
+    <div class="act-row outsrc-row">
+      <textarea class="act-desc" rows="1" placeholder="Nombre del proveedor / descripción…"
+        oninput="updateOutsourcing(${svc.id},${o.id},'desc',this.value)">${o.desc}</textarea>
+      <div class="outsrc-cost-wrap">
+        <span class="outsrc-label">Costo proveedor $</span>
+        <input type="number" class="act-hrs outsrc-input" placeholder="0" min="0" step="100"
+          value="${o.costo||''}"
+          oninput="updateOutsourcing(${svc.id},${o.id},'costo',this.value)">
+      </div>
+      <div class="outsrc-markup-wrap">
+        <span class="outsrc-label">Markup</span>
+        <input type="number" class="act-hrs" placeholder="25" min="0" max="100" step="1"
+          value="${Math.round((o.markup||0.25)*100)}"
+          oninput="updateOutsourcing(${svc.id},${o.id},'markup',this.value/100)"
+          style="width:52px">
+        <span style="font-size:.75rem;color:var(--ink-soft);padding-right:4px">%</span>
+      </div>
+      <button class="btn-del-act" onclick="delOutsourcing(${svc.id},${o.id})">×</button>
+    </div>`).join('');
+
+  return `
+    <div class="special-block outsrc-block">
+      <div class="special-header">
+        <span class="special-tag outsrc-tag">📦 PROVEEDOR</span>
+        <span class="special-label">Outsourcing / Proveedores</span>
+        <span class="special-note">Costo en $ · markup sobre costo · sin overhead ALG</span>
+      </div>
+      <div class="act-header-row" style="grid-template-columns:1fr 200px 120px 36px">
+        <span>Proveedor / Descripción</span><span>Costo proveedor</span><span>Markup %</span><span></span>
+      </div>
+      ${rows}
+    </div>`;
+}
+
+function toggleService(svcId, e) {function toggleService(svcId, e) {
+  if (e.target.tagName === 'INPUT') return;
+  const card = document.getElementById(`svc-${svcId}`);
+  const svc = services.find(s => s.id === svcId);
+  svc._open = !svc._open;
+  card.classList.toggle('open', svc._open);
+}
+
+// ══════════════════════════════════════════════════════
+// REFRESH SIDEBAR
+// ══════════════════════════════════════════════════════
+function refreshSidebar() {
+  const params = getParams();
+  const tot = calcTotal(params);
+
+  // Per-service list
+  const svcList = document.getElementById('sb-services-list');
+  svcList.innerHTML = services.map(svc => {
+    const sc = calcService(svc, params);
+    return `
+      <div class="service-summary-item">
+        <div class="ssi-name">${svc.name}</div>
+        <div class="ssi-row">
+          <span class="ssi-hrs">${sc.hrs.toFixed(1)} hrs</span>
+          <span class="ssi-price">${fmt(sc.precioDescuento)}</span>
+        </div>
+      </div>`;
+  }).join('') || '<div style="font-size:.75rem;color:rgba(255,255,255,.3);padding:8px 0">Sin servicios</div>';
+
+  document.getElementById('sb-hrs').textContent = tot.hrs.toFixed(1) + ' hrs';
+  document.getElementById('sb-costo').textContent = fmt(tot.costoTotal);
+  document.getElementById('sb-precio-lleno').textContent = fmt(tot.precioLleno);
+  document.getElementById('sb-final').textContent = fmt(tot.precioFinal);
+  document.getElementById('sb-utilidad').textContent =
+    `Utilidad: ${fmt(tot.utilidad)} · ${fmtPct(tot.pctUtil)}`;
+
+  // Payment plan
+  refreshPaymentPlan(tot.precioFinal);
+
+  // Team breakdown
+  const tb = teamBreakdown(params);
+  document.getElementById('tb-list').innerHTML = tb.map(([name, hrs]) =>
+    `<div class="tb-row"><span class="tb-name">${name}</span><span class="tb-hrs">${hrs.toFixed(1)} hrs</span></div>`
+  ).join('') || '<div style="font-size:.75rem;color:rgba(255,255,255,.3);padding:4px 0">Sin asignaciones</div>';
+}
+
+// ══════════════════════════════════════════════════════
+// PAYMENT PLAN
+// ══════════════════════════════════════════════════════
+function setPP(n) {
+  ppMonths = n;
+  document.querySelectorAll('.pp-btn').forEach(b => b.classList.remove('active'));
+  const ids = {1:'pp1',2:'pp2',3:'pp3',6:'pp6',12:'pp12'};
+  if (ids[n]) document.getElementById(ids[n]).classList.add('active');
+  const params = getParams();
+  const tot = calcTotal(params);
+  refreshPaymentPlan(tot.precioFinal);
+}
+
+function refreshPaymentPlan(precioFinal) {
+  const discRow = document.getElementById('pp-disc-row');
+  const DISC_UNICO = 0.05;
+  if (ppMonths === 1) {
+    const withDisc = precioFinal * (1 - DISC_UNICO);
+    document.getElementById('pp-total').textContent = fmt(withDisc);
+    document.getElementById('pp-n').textContent = '1';
+    document.getElementById('pp-disc').textContent = fmt(precioFinal * DISC_UNICO);
+    document.getElementById('pp-monto').textContent = fmt(withDisc);
+    discRow.style.display = '';
+  } else {
+    document.getElementById('pp-total').textContent = fmt(precioFinal);
+    document.getElementById('pp-n').textContent = ppMonths;
+    discRow.style.display = 'none';
+    document.getElementById('pp-monto').textContent = fmt(precioFinal / ppMonths);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════════════
+function showTab(tab) {
+  document.querySelectorAll('header nav button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+
+  if (tab === 'builder') {
+    document.getElementById('app-builder').style.display = '';
+    document.getElementById('app-breakdown').style.display = 'none';
+  } else {
+    document.getElementById('app-builder').style.display = 'none';
+    document.getElementById('app-breakdown').style.display = 'block';
+    renderBreakdown();
+  }
+}
+
+function renderBreakdown() {
+  const params = getParams();
+  const container = document.getElementById('breakdown-content');
+
+  const tableStyle = `width:100%;border-collapse:collapse;margin-bottom:28px;font-size:.85rem;`;
+  const thStyle = `background:#1a2f5e;color:#fff;padding:8px 12px;text-align:left;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;`;
+  const tdStyle = `padding:8px 12px;border-bottom:1px solid #e3e1d8;`;
+  const tdNumStyle = `padding:8px 12px;border-bottom:1px solid #e3e1d8;text-align:right;font-family:'DM Mono',monospace;font-size:.82rem;`;
+
+  let html = '';
+  services.forEach(svc => {
+    const sc = calcService(svc, params);
+    html += `<h3 style="font-family:'Monument Grotesk','DM Mono',sans-serif;font-size:1.1rem;margin:0 0 10px;padding:10px 14px;background:#f8f7f4;border-left:4px solid #1a3a8f;">${svc.name}</h3>`;
+    html += `<table style="${tableStyle}">
+      <thead><tr>
+        <th style="${thStyle}">Fase</th>
+        <th style="${thStyle}">Actividad</th>
+        <th style="${thStyle}">Responsable</th>
+        <th style="${thStyle};text-align:right">Hrs</th>
+        <th style="${thStyle};text-align:right">Costo Dir.</th>
+        <th style="${thStyle};text-align:right">Costo Total</th>
+        <th style="${thStyle};text-align:right">Precio c/Dcto</th>
+      </tr></thead><tbody>`;
+
+    svc.phases.forEach(ph => {
+      ph.activities.forEach((act, i) => {
+        const c = calcActivity(act, params);
+        const member = TEAM.find(t => t.id === act.memberId);
+        html += `<tr>
+          <td style="${tdStyle};color:#2e5090;font-weight:600">${i===0 ? ph.name : ''}</td>
+          <td style="${tdStyle}">${act.desc || '—'}</td>
+          <td style="${tdStyle}">${member ? member.name : '—'}</td>
+          <td style="${tdNumStyle}">${act.hrs.toFixed(1)}</td>
+          <td style="${tdNumStyle}">${fmt(c.costoDir)}</td>
+          <td style="${tdNumStyle}">${fmt(c.costoTotal)}</td>
+          <td style="${tdNumStyle};color:#1a6b3c;font-weight:600">${fmt(c.precioDescuento)}</td>
+        </tr>`;
+      });
+    });
+
+    html += `<tr style="background:#f8f7f4;font-weight:700">
+      <td colspan="3" style="${tdStyle}font-weight:700">SUBTOTAL ${svc.name}</td>
+      <td style="${tdNumStyle}font-weight:700">${sc.hrs.toFixed(1)}</td>
+      <td style="${tdNumStyle}"></td>
+      <td style="${tdNumStyle}font-weight:700">${fmt(sc.costoTotal)}</td>
+      <td style="${tdNumStyle}font-weight:700;color:#1a6b3c">${fmt(sc.precioDescuento)}</td>
+    </tr></tbody></table>`;
+  });
+
+  const tot = calcTotal(params);
+  html += `
+    <div style="background:#1a2f5e;color:#fff;padding:20px 24px;border-radius:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:8px">
+      <div><div style="font-size:.65rem;opacity:.5;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Total horas</div><div style="font-family:'DM Mono',monospace;font-size:1.1rem">${tot.hrs.toFixed(1)} hrs</div></div>
+      <div><div style="font-size:.65rem;opacity:.5;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Costo ALG</div><div style="font-family:'DM Mono',monospace;font-size:1.1rem">${fmt(tot.costoTotal)}</div></div>
+      <div><div style="font-size:.65rem;opacity:.5;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Precio s/dcto</div><div style="font-family:'DM Mono',monospace;font-size:1.1rem">${fmt(tot.precioLleno)}</div></div>
+      <div><div style="font-size:.65rem;opacity:.5;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Precio final</div><div style="font-family:'Monument Grotesk','DM Mono',sans-serif;font-size:1.4rem;color:#c8972a">${fmt(tot.precioFinal)}</div></div>
+    </div>`;
+
+  container.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════
+// EXPORT PDF
+// ══════════════════════════════════════════════════════
+function exportPDF() {
+  // Switch to breakdown view first for a clean print
+  const params = getParams();
+  const tot = calcTotal(params);
+  const cliente = document.getElementById('f-cliente').value || 'Cliente';
+  const proyecto = document.getElementById('f-proyecto').value || 'Proyecto';
+  const fecha = document.getElementById('f-fecha').value || new Date().toLocaleDateString('es-MX');
+
+  let html = `<!DOCTYPE html><html><head>
+    <meta charset="UTF-8">
+    <title>Cotización ALG — ${cliente}</title>
+    <link href="https://api.fontshare.com/v2/css?f[]=monument-grotesk@400,500,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      body{font-family:'Monument Grotesk',sans-serif;color:#0f1117;padding:40px;max-width:900px;margin:0 auto;font-size:13px;}
+      h1{font-family:'Monument Grotesk','DM Mono',sans-serif;font-size:2rem;margin-bottom:4px;}
+      .meta{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0;padding:16px;background:#f8f7f4;}
+      .meta-item label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#7a7f94;display:block;}
+      .meta-item span{font-weight:600;}
+      table{width:100%;border-collapse:collapse;margin-bottom:24px;font-size:12px;}
+      thead tr{background:#1a2f5e;color:#fff;}
+      th{padding:8px 10px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;}
+      td{padding:7px 10px;border-bottom:1px solid #e3e1d8;}
+      td.num{text-align:right;font-family:'DM Mono',monospace;}
+      tr.sub td{background:#f2f2f2;font-weight:700;}
+      .svc-title{font-family:'Monument Grotesk','DM Mono',sans-serif;font-size:1rem;padding:10px 12px;background:#f8f7f4;border-left:4px solid #1a3a8f;margin:20px 0 8px;}
+      .totals{background:#1a2f5e;color:#fff;padding:16px 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px;}
+      .totals label{font-size:10px;opacity:.5;text-transform:uppercase;display:block;margin-bottom:3px;}
+      .totals span{font-family:'DM Mono',monospace;font-size:1rem;}
+      .totals .final span{font-family:'Monument Grotesk','DM Mono',sans-serif;font-size:1.4rem;color:#c8972a;}
+      .footer{margin-top:40px;padding-top:12px;border-top:1px solid #e3e1d8;font-size:11px;color:#7a7f94;}
+    </style>
+  </head><body>
+    <h1>Cotización de servicios</h1>
+    <div style="color:#7a7f94;margin-bottom:16px">ALG Agency</div>
+    <div class="meta">
+      <div class="meta-item"><label>Cliente</label><span>${cliente}</span></div>
+      <div class="meta-item"><label>Proyecto</label><span>${proyecto}</span></div>
+      <div class="meta-item"><label>Fecha</label><span>${fecha}</span></div>
+      <div class="meta-item"><label>Descuento global</label><span>${document.getElementById('p-dcto').value}%</span></div>
+    </div>`;
+
+  services.forEach(svc => {
+    const sc = calcService(svc, params);
+    html += `<div class="svc-title">${svc.name}</div>
+      <table><thead><tr>
+        <th>Fase</th><th>Actividad</th><th>Responsable</th>
+        <th style="text-align:right">Hrs</th>
+        <th style="text-align:right">Costo Total</th>
+        <th style="text-align:right">Precio c/Dcto</th>
+      </tr></thead><tbody>`;
+    svc.phases.forEach(ph => {
+      ph.activities.forEach((act, i) => {
+        const c = calcActivity(act, params);
+        const member = TEAM.find(t => t.id === act.memberId);
+        html += `<tr>
+          <td>${i===0?ph.name:''}</td>
+          <td>${act.desc||'—'}</td>
+          <td>${member?member.name:'—'}</td>
+          <td class="num">${act.hrs.toFixed(1)}</td>
+          <td class="num">${fmt(c.costoTotal)}</td>
+          <td class="num">${fmt(c.precioDescuento)}</td>
+        </tr>`;
+      });
+    });
+    // Juntas row
+    if (svc._showJuntas && svc._juntas) {
+      const j = svc._juntas; const c = calcActivity(j, params);
+      html += `<tr style="background:#f0f4ff">
+        <td style="${tdStyle}color:#1a3a8f;font-style:italic">Juntas</td>
+        <td style="${tdStyle}font-style:italic">${j.desc||'Meetings / Project Overhead'}</td>
+        <td style="${tdStyle}font-style:italic">JUNTAS**</td>
+        <td style="${tdNumStyle}">${j.hrs.toFixed(1)}</td>
+        <td style="${tdNumStyle}">${fmt(c.costoTotal)}</td>
+        <td style="${tdNumStyle}">${fmt(c.precioDescuento)}</td>
+      </tr>`;
+    }
+    // Outsourcing rows
+    (svc._outsourcing||[]).forEach(o => {
+      const c = calcActivity(o, params);
+      html += `<tr style="background:#fffbf0">
+        <td style="${tdStyle}color:#b45309;font-style:italic">Proveedor</td>
+        <td style="${tdStyle}font-style:italic">${o.desc||'Outsourcing'}</td>
+        <td style="${tdStyle}font-style:italic">Ext. · ${Math.round((o.markup||.25)*100)}% markup</td>
+        <td style="${tdNumStyle}">—</td>
+        <td style="${tdNumStyle}">${fmt(o.costo||0)}</td>
+        <td style="${tdNumStyle}">${fmt(c.precioDescuento)}</td>
+      </tr>`;
+    });
+    if (svc._showJuntas && svc._juntas) {
+      const j=svc._juntas; const c=calcActivity(j,params);
+      html+=`<tr style="background:#f0f4ff"><td>Juntas</td><td>${j.desc||'Meetings'}</td><td>JUNTAS**</td><td class="num">${j.hrs.toFixed(1)}</td><td class="num">${fmt(c.costoTotal)}</td><td class="num">${fmt(c.precioDescuento)}</td></tr>`;
+    }
+    (svc._outsourcing||[]).forEach(o=>{
+      const c=calcActivity(o,params);
+      html+=`<tr style="background:#fffbf0"><td>Proveedor</td><td>${o.desc||'Outsourcing'}</td><td>${Math.round((o.markup||.25)*100)}% markup</td><td class="num">—</td><td class="num">${fmt(o.costo||0)}</td><td class="num">${fmt(c.precioDescuento)}</td></tr>`;
+    });
+    html += `<tr class="sub">
+      <td colspan="3">SUBTOTAL</td>
+      <td class="num">${sc.hrs.toFixed(1)}</td>
+      <td class="num">${fmt(sc.costoTotal)}</td>
+      <td class="num">${fmt(sc.precioDescuento)}</td>
+    </tr></tbody></table>`;
+  });
+
+  const ppDisc = ppMonths === 1 ? tot.precioFinal * 0.95 : tot.precioFinal;
+  const monto  = ppMonths === 1 ? ppDisc : tot.precioFinal / ppMonths;
+
+  html += `<div class="totals">
+    <div><label>Total horas</label><span>${tot.hrs.toFixed(1)} hrs</span></div>
+    <div><label>Precio s/descuento</label><span>${fmt(tot.precioLleno)}</span></div>
+    <div><label>Precio con descuento</label><span>${fmt(tot.precioFinal)}</span></div>
+    <div class="final"><label>Monto por pago (×${ppMonths})</label><span>${fmt(monto)}</span></div>
+  </div>
+  <div class="footer">Esta cotización es referencial y puede estar sujeta a cambios tras revisión de entregables con el cliente.</div>
+  </body></html>`;
+
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+  w.onload = () => w.print();
+}
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+document.getElementById('f-fecha').value = new Date().toISOString().split('T')[0];
+
+// Pre-load 5 default services
+['Brand Strategy','Brand Identity','Web','Estrategia Digital','Producción Audiovisual']
+  .forEach(name => addService(name));
+
+// Open first service
+if (services.length) {
+  services[0]._open = true;
+  renderServices();
+}
+refreshSidebar();
+</script>
+</body>
+</html>
