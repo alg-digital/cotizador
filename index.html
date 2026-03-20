@@ -1,0 +1,1822 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALG — Cotizador</title>
+<link href="https://api.fontshare.com/v2/css?f[]=monument-grotesk@400,500,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:       #0f1117;
+    --ink-mid:   #3a3d4a;
+    --ink-soft:  #7a7f94;
+    --paper:     #f8f7f4;
+    --paper-2:   #efeee9;
+    --paper-3:   #e3e1d8;
+    --accent:    #1a3a8f;
+    --accent-2:  #e8312a;
+    --gold:      #c8972a;
+    --green:     #1a6b3c;
+    --green-bg:  #e8f4ed;
+    --red-bg:    #fdf0ef;
+    --mono:      'DM Mono', monospace;
+    --serif:     'Monument Grotesk', sans-serif;
+    --sans:      'Monument Grotesk', sans-serif;
+    --radius:    6px;
+    --shadow:    0 2px 12px rgba(15,17,23,.08);
+    --shadow-lg: 0 8px 40px rgba(15,17,23,.14);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; }
+  body {
+    font-family: var(--sans);
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--ink);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { font-family: var(--sans); font-weight: 700; font-size: 1.4rem; color: #fff; letter-spacing: .02em; }
+  .logo span { color: var(--gold); }
+  header nav { display: flex; gap: 6px; }
+  header nav button {
+    background: transparent; border: 1px solid rgba(255,255,255,.15);
+    color: rgba(255,255,255,.7); padding: 6px 16px; border-radius: 30px;
+    font-family: var(--sans); font-size: .8rem; cursor: pointer;
+    transition: all .2s;
+  }
+  header nav button.active, header nav button:hover {
+    background: rgba(255,255,255,.1); color: #fff; border-color: rgba(255,255,255,.4);
+  }
+
+  /* ── LAYOUT ── */
+  .app { display: grid; grid-template-columns: 1fr 360px; min-height: calc(100vh - 60px); }
+  .main { padding: 32px 40px; overflow-y: auto; }
+  .sidebar {
+    background: var(--ink); color: #fff;
+    padding: 28px 24px;
+    display: flex; flex-direction: column; gap: 0;
+    position: sticky; top: 60px; height: calc(100vh - 60px);
+    overflow-y: auto;
+  }
+
+  /* ── SECTIONS ── */
+  .section { margin-bottom: 32px; }
+  .section-title {
+    font-family: var(--sans); font-weight: 700; font-size: 1.25rem; color: var(--ink);
+    margin-bottom: 16px; padding-bottom: 8px;
+    border-bottom: 2px solid var(--ink);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title .num {
+    font-family: var(--mono); font-size: .7rem; color: var(--paper);
+    background: var(--ink); padding: 2px 8px; border-radius: 20px;
+  }
+
+  /* ── CLIENT INFO ── */
+  .client-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field-group { display: flex; flex-direction: column; gap: 4px; }
+  .field-group label { font-size: .75rem; font-weight: 600; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .06em; }
+  .field-group input, .field-group select {
+    border: 1.5px solid var(--paper-3);
+    background: #fff; border-radius: var(--radius);
+    padding: 9px 12px; font-family: var(--sans); font-size: .9rem; color: var(--ink);
+    transition: border-color .15s;
+    appearance: none; -webkit-appearance: none;
+  }
+  .field-group input:focus, .field-group select:focus { outline: none; border-color: var(--accent); }
+
+  /* ── PARAMS BAR ── */
+  .params-bar {
+    background: var(--ink); color: #fff;
+    padding: 14px 20px; border-radius: var(--radius);
+    display: flex; gap: 28px; align-items: center;
+    margin-bottom: 24px; flex-wrap: wrap;
+  }
+  .param-item { display: flex; flex-direction: column; gap: 3px; }
+  .param-item label { font-size: .65rem; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.5); }
+  .param-item input {
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.2);
+    color: #fff; font-family: var(--mono); font-size: .85rem;
+    padding: 4px 8px; border-radius: 4px; width: 90px;
+    transition: border-color .15s;
+  }
+  .param-item input:focus { outline: none; border-color: rgba(255,255,255,.6); }
+
+  /* ── SERVICES ── */
+  .services-list { display: flex; flex-direction: column; gap: 16px; }
+  .service-card {
+    background: #fff; border: 1.5px solid var(--paper-3);
+    border-radius: 8px; overflow: hidden;
+    box-shadow: var(--shadow); transition: box-shadow .2s;
+  }
+  .service-card:hover { box-shadow: var(--shadow-lg); }
+
+  .service-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px; cursor: pointer;
+    background: var(--paper-2); border-bottom: 1.5px solid var(--paper-3);
+    user-select: none;
+  }
+  .service-header:hover { background: var(--paper-3); }
+  .service-toggle {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--ink); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .7rem; flex-shrink: 0; transition: transform .2s;
+  }
+  .service-card.open .service-toggle { transform: rotate(45deg); background: var(--accent-2); }
+  .service-name-input {
+    flex: 1; background: transparent; border: none;
+    font-family: var(--sans); font-weight: 700; font-size: 1rem; color: var(--ink);
+    cursor: text;
+  }
+  .service-name-input:focus { outline: none; }
+  .service-price-tag {
+    font-family: var(--mono); font-size: .8rem; color: var(--ink-soft);
+    background: var(--paper-3); padding: 3px 10px; border-radius: 20px;
+    white-space: nowrap;
+  }
+  .service-price-tag.has-value { background: var(--green-bg); color: var(--green); font-weight: 500; }
+
+  .service-body { display: none; padding: 0; }
+  .service-card.open .service-body { display: block; }
+
+  /* ── PHASE ── */
+  .phase-block { border-bottom: 1px solid var(--paper-2); }
+  .phase-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 18px; background: rgba(26,58,143,.04);
+    border-bottom: 1px solid var(--paper-2);
+  }
+  .phase-tag {
+    font-family: var(--mono); font-size: .7rem; color: var(--accent);
+    background: rgba(26,58,143,.1); padding: 2px 8px; border-radius: 4px;
+  }
+  .phase-name-input {
+    flex: 1; border: none; background: transparent;
+    font-weight: 600; font-size: .85rem; color: var(--ink);
+    font-family: var(--sans);
+  }
+  .phase-name-input:focus { outline: none; }
+  .btn-del-phase {
+    background: none; border: none; color: var(--ink-soft);
+    cursor: pointer; font-size: .8rem; padding: 2px 6px;
+    border-radius: 4px; transition: all .15s;
+  }
+  .btn-del-phase:hover { background: var(--red-bg); color: var(--accent-2); }
+
+  /* ── ACTIVITY ROWS ── */
+  .activities-table { width: 100%; }
+  .act-row {
+    display: grid;
+    grid-template-columns: 1fr 160px 72px 36px;
+    gap: 0;
+    border-bottom: 1px solid var(--paper-2);
+    transition: background .1s;
+  }
+  .act-row:hover { background: var(--paper); }
+  .act-row > * { padding: 8px 10px; border-right: 1px solid var(--paper-2); }
+  .act-row > *:last-child { border-right: none; }
+
+  .act-desc {
+    border: none; background: transparent;
+    font-family: var(--sans); font-size: .85rem; color: var(--ink);
+    resize: none; min-height: 34px; width: 100%;
+  }
+  .act-desc:focus { outline: none; }
+  .act-select {
+    border: none; background: transparent;
+    font-size: .8rem; color: var(--ink-mid); width: 100%;
+    appearance: none; -webkit-appearance: none; cursor: pointer;
+    font-family: var(--sans);
+  }
+  .act-select:focus { outline: none; }
+  .act-hrs {
+    border: none; background: transparent;
+    font-family: var(--mono); font-size: .85rem; color: var(--ink);
+    text-align: right; width: 100%;
+  }
+  .act-hrs:focus { outline: none; }
+  .btn-del-act {
+    background: none; border: none; color: var(--paper-3);
+    cursor: pointer; font-size: .9rem; display: flex;
+    align-items: center; justify-content: center;
+    transition: color .15s;
+  }
+  .btn-del-act:hover { color: var(--accent-2); }
+
+  .act-header-row {
+    display: grid;
+    grid-template-columns: 1fr 160px 72px 36px;
+    background: var(--paper-2);
+    border-bottom: 1px solid var(--paper-3);
+  }
+  .act-header-row span {
+    padding: 5px 10px; font-size: .65rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft);
+    border-right: 1px solid var(--paper-3);
+  }
+  .act-header-row span:last-child { border-right: none; }
+
+  .phase-footer {
+    display: flex; gap: 8px; padding: 8px 14px;
+    background: rgba(26,58,143,.02);
+  }
+  .btn-add-act {
+    font-size: .75rem; color: var(--accent); background: rgba(26,58,143,.06);
+    border: 1px dashed rgba(26,58,143,.3); border-radius: 4px;
+    padding: 4px 12px; cursor: pointer; font-family: var(--sans);
+    transition: all .15s;
+  }
+  .btn-add-act:hover { background: rgba(26,58,143,.12); }
+
+  .service-footer {
+    display: flex; gap: 10px; padding: 12px 18px;
+    border-top: 1px solid var(--paper-2); background: var(--paper);
+    flex-wrap: wrap; align-items: center;
+  }
+  .btn-add-phase {
+    font-size: .8rem; color: var(--accent); background: transparent;
+    border: 1.5px dashed rgba(26,58,143,.4); border-radius: 6px;
+    padding: 7px 16px; cursor: pointer; font-family: var(--sans);
+    transition: all .15s; display: flex; align-items: center; gap: 6px;
+  }
+  .btn-add-phase:hover { background: rgba(26,58,143,.06); }
+  .btn-del-service {
+    margin-left: auto; font-size: .75rem; color: var(--ink-soft);
+    background: transparent; border: 1px solid var(--paper-3);
+    border-radius: 4px; padding: 6px 12px; cursor: pointer; font-family: var(--sans);
+    transition: all .15s;
+  }
+  .btn-del-service:hover { border-color: var(--accent-2); color: var(--accent-2); }
+
+  .btn-add-service {
+    display: flex; align-items: center; gap: 10px;
+    border: 2px dashed var(--paper-3); border-radius: 8px;
+    padding: 16px 20px; color: var(--ink-soft);
+    background: transparent; cursor: pointer; font-family: var(--sans);
+    font-size: .9rem; transition: all .2s; width: 100%;
+    margin-top: 4px;
+  }
+  .btn-add-service:hover { border-color: var(--accent); color: var(--accent); background: rgba(26,58,143,.03); }
+
+  /* ── SIDEBAR ── */
+  .sidebar-title {
+    font-family: var(--sans); font-weight: 700; font-size: 1.1rem; color: #fff;
+    margin-bottom: 20px; padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+  }
+
+  .summary-block { margin-bottom: 20px; }
+  .summary-block-title {
+    font-size: .65rem; text-transform: uppercase; letter-spacing: .1em;
+    color: rgba(255,255,255,.4); margin-bottom: 10px;
+  }
+  .summary-line {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+  .summary-line .lbl { font-size: .8rem; color: rgba(255,255,255,.65); }
+  .summary-line .val { font-family: var(--mono); font-size: .85rem; color: #fff; }
+  .summary-line.total .lbl { font-weight: 700; color: #fff; font-size: .9rem; }
+  .summary-line.total .val { font-size: 1rem; color: var(--gold); }
+  .summary-line.subtl .lbl { color: rgba(255,255,255,.4); font-size: .75rem; }
+  .summary-line.subtl .val { font-size: .78rem; color: rgba(255,255,255,.5); }
+
+  .service-summary-item {
+    padding: 8px 10px; border-radius: 6px;
+    background: rgba(255,255,255,.05); margin-bottom: 6px;
+  }
+  .ssi-name { font-size: .8rem; color: rgba(255,255,255,.8); margin-bottom: 4px; }
+  .ssi-row { display: flex; justify-content: space-between; }
+  .ssi-hrs { font-size: .72rem; color: rgba(255,255,255,.4); font-family: var(--mono); }
+  .ssi-price { font-size: .82rem; color: var(--gold); font-family: var(--mono); }
+
+  /* Params in sidebar */
+  .sidebar-params { margin-bottom: 20px; }
+  .sp-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .sp-item { flex: 1; }
+  .sp-item label { font-size: .65rem; color: rgba(255,255,255,.4); display: block; margin-bottom: 3px; text-transform: uppercase; letter-spacing: .06em; }
+  .sp-item input {
+    width: 100%; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.15);
+    color: #fff; font-family: var(--mono); font-size: .85rem;
+    padding: 6px 8px; border-radius: 4px;
+  }
+  .sp-item input:focus { outline: none; border-color: var(--gold); }
+
+  /* discount & payment */
+  .dcto-row { display: flex; gap: 8px; align-items: center; margin: 10px 0; }
+  .dcto-row label { font-size: .75rem; color: rgba(255,255,255,.6); flex: 1; }
+  .dcto-row input {
+    width: 70px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.15);
+    color: #fff; font-family: var(--mono); font-size: .85rem;
+    padding: 5px 8px; border-radius: 4px; text-align: right;
+  }
+  .dcto-row input:focus { outline: none; border-color: var(--gold); }
+
+  .final-price-box {
+    background: var(--gold); color: var(--ink);
+    border-radius: 8px; padding: 16px;
+    margin: 16px 0; text-align: center;
+  }
+  .fpb-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; opacity: .7; }
+  .fpb-val { font-family: var(--sans); font-weight: 700; font-size: 1.8rem; margin: 4px 0; }
+  .fpb-sub { font-size: .72rem; opacity: .65; }
+
+  /* Payment plan */
+  .payment-plan { margin-top: 12px; }
+  .pp-title { font-size: .65rem; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.4); margin-bottom: 8px; }
+  .pp-options { display: flex; gap: 6px; margin-bottom: 10px; }
+  .pp-btn {
+    flex: 1; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.15);
+    color: rgba(255,255,255,.6); padding: 6px 4px; border-radius: 4px;
+    font-size: .72rem; cursor: pointer; font-family: var(--sans); transition: all .15s;
+    text-align: center;
+  }
+  .pp-btn.active { background: rgba(200,151,42,.2); border-color: var(--gold); color: var(--gold); }
+  .pp-result {
+    background: rgba(255,255,255,.05); border-radius: 6px;
+    padding: 12px; display: flex; flex-direction: column; gap: 6px;
+  }
+  .pp-item { display: flex; justify-content: space-between; }
+  .pp-item .k { font-size: .75rem; color: rgba(255,255,255,.5); }
+  .pp-item .v { font-family: var(--mono); font-size: .8rem; color: #fff; }
+
+  /* Team breakdown */
+  .team-breakdown { margin-top: 16px; }
+  .tb-title { font-size: .65rem; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.4); margin-bottom: 8px; }
+  .tb-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
+  .tb-name { font-size: .78rem; color: rgba(255,255,255,.7); }
+  .tb-hrs { font-family: var(--mono); font-size: .75rem; color: rgba(255,255,255,.45); }
+
+  /* Export button */
+  .btn-export {
+    width: 100%; margin-top: 16px;
+    background: #fff; color: var(--ink); border: none;
+    padding: 12px; border-radius: 6px; font-family: var(--sans);
+    font-size: .85rem; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all .2s;
+  }
+  .btn-export:hover { background: var(--gold); }
+
+  /* ── PRINT / PDF ── */
+  @media print {
+    header, .sidebar { display: none !important; }
+    .app { display: block; }
+    .main { padding: 20px; }
+    .service-body { display: block !important; }
+  }
+
+  /* ── UTIL ── */
+  .mono { font-family: var(--mono); }
+  .tag {
+    display: inline-block; font-size: .7rem; padding: 2px 8px;
+    border-radius: 20px; font-weight: 600;
+  }
+  .tag.green { background: var(--green-bg); color: var(--green); }
+  .tag.red { background: var(--red-bg); color: var(--accent-2); }
+
+  select option { font-family: var(--sans); }
+
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  /* ── SPECIAL BLOCKS ── */
+  .special-block { border-top: 2px solid var(--paper-2); }
+  .special-header {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 9px 18px; background: var(--paper);
+    border-bottom: 1px solid var(--paper-2);
+  }
+  .special-tag {
+    font-size: .68rem; font-weight: 700; padding: 3px 10px;
+    border-radius: 20px; letter-spacing: .04em; white-space: nowrap;
+  }
+  .juntas-tag  { background: #e8f0fe; color: #1a3a8f; }
+  .outsrc-tag  { background: #fff3e0; color: #b45309; }
+  .special-label { font-size: .85rem; font-weight: 600; color: var(--ink); }
+  .special-note  { font-size: .72rem; color: var(--ink-soft); margin-left: auto; font-style: italic; }
+
+  .special-fixed-cell {
+    padding: 8px 10px; font-size: .8rem; color: var(--ink-soft);
+    border-right: 1px solid var(--paper-2); display: flex; align-items: center;
+  }
+
+  .outsrc-row { grid-template-columns: 1fr 180px 110px 36px !important; }
+  .outsrc-row-hdr { grid-template-columns: 1fr 180px 110px 36px !important; }
+  .outsrc-field {
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 4px 10px; border-right: 1px solid var(--paper-2); gap: 2px;
+  }
+  .outsrc-label { font-size: .65rem; color: var(--ink-soft); }
+
+  .btn-special {
+    font-size: .75rem; padding: 6px 12px; border-radius: 4px;
+    cursor: pointer; font-family: var(--sans); transition: all .15s;
+    border: 1px dashed; background: transparent;
+  }
+  .juntas-btn  { color: #1a3a8f; border-color: rgba(26,58,143,.35); }
+  .juntas-btn:hover  { background: rgba(26,58,143,.07); }
+  .outsrc-btn  { color: #b45309; border-color: rgba(180,83,9,.35); }
+  .outsrc-btn:hover  { background: rgba(180,83,9,.07); }
+
+  /* ── TEMPLATES ── */
+  .tmpl-filter {
+    font-size:.78rem; padding:6px 14px; border-radius:20px;
+    border: 1.5px solid var(--paper-3); background:transparent;
+    cursor:pointer; font-family:var(--sans); transition:all .15s; color:var(--ink-mid);
+  }
+  .tmpl-filter:hover  { border-color:var(--accent); color:var(--accent); }
+  .tmpl-filter.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+  .tmpl-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
+
+  .tmpl-card {
+    background:#fff; border:1.5px solid var(--paper-3); border-radius:10px;
+    padding:18px 20px; box-shadow:var(--shadow);
+    display:flex; flex-direction:column; gap:10px;
+    transition: box-shadow .2s, transform .15s;
+  }
+  .tmpl-card:hover { box-shadow:var(--shadow-lg); transform:translateY(-2px); }
+
+  .tmpl-card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+  .tmpl-card-name { font-weight:700; font-size:.95rem; color:var(--ink); }
+  .tmpl-level-badge {
+    font-size:.65rem; font-weight:700; padding:3px 9px; border-radius:20px;
+    white-space:nowrap; flex-shrink:0;
+  }
+  .level-startup   { background:#e8f5e9; color:#2e7d32; }
+  .level-mediana   { background:#e3f2fd; color:#1565c0; }
+  .level-enterprise{ background:#fce4ec; color:#880e4f; }
+
+  .tmpl-meta { font-size:.75rem; color:var(--ink-soft); }
+  .tmpl-notes { font-size:.78rem; color:var(--ink-mid); font-style:italic; }
+
+  .tmpl-phases { display:flex; flex-wrap:wrap; gap:4px; }
+  .tmpl-phase-tag {
+    font-size:.68rem; background:rgba(26,58,143,.07); color:var(--accent);
+    padding:2px 8px; border-radius:4px; font-family:var(--mono);
+  }
+
+  .tmpl-actions { display:flex; gap:8px; margin-top:4px; }
+  .tmpl-btn-load {
+    flex:1; padding:7px 12px; background:var(--accent); color:#fff;
+    border:none; border-radius:6px; cursor:pointer; font-family:var(--sans);
+    font-size:.78rem; font-weight:600; transition:background .15s;
+  }
+  .tmpl-btn-load:hover { background:#1530a0; }
+  .tmpl-btn-del {
+    padding:7px 10px; background:transparent; color:var(--ink-soft);
+    border:1.5px solid var(--paper-3); border-radius:6px; cursor:pointer;
+    font-size:.78rem; transition:all .15s;
+  }
+  .tmpl-btn-del:hover { border-color:var(--accent-2); color:var(--accent-2); }
+
+  /* ── Subtle fade-in */
+  /* Subtle fade-in */
+  @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+  .service-card { animation: fadeUp .25s ease both; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">ALG <span>·</span> Cotizador</div>
+  <nav>
+    <button class="active" onclick="showTab('builder')">Constructor</button>
+    <button onclick="showTab('breakdown')">Desglose</button>
+    <button onclick="showTab('templates')">📁 Templates</button>
+  </nav>
+</header>
+
+<div class="app" id="app-builder">
+  <!-- ── MAIN ── -->
+  <main class="main" id="main-content">
+
+    <!-- Client Info -->
+    <div class="section">
+      <div class="section-title"><span class="num">01</span> Información del proyecto</div>
+      <div class="client-grid">
+        <div class="field-group">
+          <label>Cliente</label>
+          <input type="text" id="f-cliente" placeholder="Nombre del cliente" oninput="refreshSidebar()">
+        </div>
+        <div class="field-group">
+          <label>Proyecto</label>
+          <input type="text" id="f-proyecto" placeholder="Nombre del proyecto" oninput="refreshSidebar()">
+        </div>
+        <div class="field-group">
+          <label>Fecha</label>
+          <input type="date" id="f-fecha" oninput="refreshSidebar()">
+        </div>
+        <div class="field-group">
+          <label>Preparado por</label>
+          <input type="text" id="f-prep" placeholder="Tu nombre" oninput="refreshSidebar()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Services -->
+    <div class="section">
+      <div class="section-title"><span class="num">02</span> Servicios y entregables</div>
+      <div class="services-list" id="services-list"></div>
+      <button class="btn-add-service" onclick="addService()">
+        <span style="font-size:1.2rem">＋</span> Agregar servicio
+      </button>
+    </div>
+
+  </main>
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-title">Resumen de cotización</div>
+
+    <!-- Parámetros -->
+    <div class="sidebar-params">
+      <div class="summary-block-title">Parámetros</div>
+      <div class="sp-row">
+        <div class="sp-item">
+          <label>Overhead ALG</label>
+          <input type="number" id="p-overhead" value="1.5" step="0.05" min="1" oninput="refreshSidebar()">
+        </div>
+        <div class="sp-item">
+          <label>Factor util.</label>
+          <input type="number" id="p-util" value="0.5" step="0.05" min="0" max="1" oninput="refreshSidebar()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Service summaries -->
+    <div class="summary-block" id="sb-services">
+      <div class="summary-block-title">Por servicio</div>
+      <div id="sb-services-list"></div>
+    </div>
+
+    <!-- Totals -->
+    <div class="summary-block">
+      <div class="summary-block-title">Totales</div>
+      <div class="summary-line">
+        <span class="lbl">Total horas</span>
+        <span class="val" id="sb-hrs">0 hrs</span>
+      </div>
+      <div class="summary-line">
+        <span class="lbl">Costo total ALG</span>
+        <span class="val" id="sb-costo">$0</span>
+      </div>
+      <div class="summary-line">
+        <span class="lbl">Precio s/descuento</span>
+        <span class="val" id="sb-precio-lleno">$0</span>
+      </div>
+    </div>
+
+    <!-- Descuentos -->
+    <div class="summary-block">
+      <div class="summary-block-title">Descuento</div>
+      <div class="dcto-row">
+        <label>Descuento global</label>
+        <input type="number" id="p-dcto" value="10" min="0" max="100" step="1" oninput="refreshSidebar()">
+        <span style="font-size:.8rem;color:rgba(255,255,255,.5)">%</span>
+      </div>
+      <div class="dcto-row">
+        <label>Dcto. adicional</label>
+        <input type="number" id="p-dcto2" value="0" min="0" max="100" step="1" oninput="refreshSidebar()">
+        <span style="font-size:.8rem;color:rgba(255,255,255,.5)">%</span>
+      </div>
+    </div>
+
+    <!-- Final price -->
+    <div class="final-price-box">
+      <div class="fpb-label">Precio final</div>
+      <div class="fpb-val" id="sb-final">$0</div>
+      <div class="fpb-sub" id="sb-utilidad">Utilidad: $0 · 0%</div>
+    </div>
+
+    <!-- Payment plan -->
+    <div class="payment-plan">
+      <div class="pp-title">Plan de pagos</div>
+      <div class="pp-options" id="pp-options">
+        <button class="pp-btn active" onclick="setPP(1)" id="pp1">1 pago</button>
+        <button class="pp-btn" onclick="setPP(2)" id="pp2">2 pagos</button>
+        <button class="pp-btn" onclick="setPP(3)" id="pp3">3 pagos</button>
+        <button class="pp-btn" onclick="setPP(6)" id="pp6">6 pagos</button>
+        <button class="pp-btn" onclick="setPP(12)" id="pp12">12 pagos</button>
+      </div>
+      <div class="pp-result" id="pp-result">
+        <div class="pp-item"><span class="k">Precio total</span><span class="v" id="pp-total">$0</span></div>
+        <div class="pp-item"><span class="k">No. de pagos</span><span class="v" id="pp-n">1</span></div>
+        <div class="pp-item" id="pp-disc-row">
+          <span class="k">Dcto. pago único (5%)</span>
+          <span class="v" id="pp-disc">$0</span>
+        </div>
+        <div class="pp-item" style="border-top:1px solid rgba(255,255,255,.1);padding-top:6px;margin-top:2px">
+          <span class="k" style="color:#fff;font-weight:600">Monto por pago</span>
+          <span class="v" style="color:var(--gold);font-weight:700" id="pp-monto">$0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Team breakdown -->
+    <div class="team-breakdown">
+      <div class="tb-title">Horas por persona</div>
+      <div id="tb-list"></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
+      <button class="btn-export" onclick="exportCliente()">⬇ PDF Cliente</button>
+      <button class="btn-export" onclick="exportAgencia()" style="background:var(--gold);color:var(--ink)">⬇ PDF Agencia (interno)</button>
+    </div>
+  </aside>
+</div>
+
+<!-- ── TEMPLATES VIEW ── -->
+<div id="app-templates" style="display:none; padding:32px 40px; max-width:960px; margin:0 auto;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+    <h2 style="font-family:var(--sans);font-weight:700;font-size:1.5rem;">📁 Templates de servicios</h2>
+    <div style="display:flex;gap:8px">
+      <button class="btn-export" style="margin:0;width:auto;padding:9px 18px;font-size:.8rem;background:var(--accent);color:#fff" onclick="exportTemplatesFile()">⬇ Exportar templates (.json)</button>
+      <label class="btn-export" style="margin:0;width:auto;padding:9px 18px;font-size:.8rem;cursor:pointer">
+        ⬆ Importar templates (.json)
+        <input type="file" accept=".json" onchange="importTemplatesFile(event)" style="display:none">
+      </label>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap" id="tmpl-filters">
+    <button class="tmpl-filter active" onclick="filterTemplates('all')">Todos</button>
+    <button class="tmpl-filter" onclick="filterTemplates('startup')">🌱 Startup</button>
+    <button class="tmpl-filter" onclick="filterTemplates('mediana')">🏢 Mediana</button>
+    <button class="tmpl-filter" onclick="filterTemplates('enterprise')">🏛 Enterprise</button>
+  </div>
+
+  <div id="tmpl-grid"></div>
+  <div id="tmpl-empty" style="display:none;text-align:center;padding:60px 20px;color:var(--ink-soft)">
+    <div style="font-size:2.5rem;margin-bottom:12px">📭</div>
+    <div style="font-weight:600;margin-bottom:6px">No hay templates guardados aún</div>
+    <div style="font-size:.85rem">Abre un servicio en el Constructor y haz clic en "💾 Guardar template"</div>
+  </div>
+</div>
+
+<!-- ── SAVE TEMPLATE MODAL ── -->
+<div id="tmpl-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;display:none;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;padding:32px;width:420px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <h3 style="font-weight:700;font-size:1.1rem;margin-bottom:20px">💾 Guardar como template</h3>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="field-group">
+        <label>Nombre del template</label>
+        <input type="text" id="tmpl-name-input" placeholder="Ej. Brand Strategy Completo">
+      </div>
+      <div class="field-group">
+        <label>Nivel de cliente</label>
+        <select id="tmpl-level-input" style="appearance:auto">
+          <option value="startup">🌱 Startup</option>
+          <option value="mediana">🏢 Mediana empresa</option>
+          <option value="enterprise">🏛 Enterprise</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>Notas (opcional)</label>
+        <input type="text" id="tmpl-notes-input" placeholder="Descripción breve del alcance…">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:24px;justify-content:flex-end">
+      <button onclick="closeTemplateModal()" style="padding:9px 20px;border:1.5px solid var(--paper-3);border-radius:6px;background:transparent;cursor:pointer;font-family:var(--sans);font-size:.85rem">Cancelar</button>
+      <button onclick="confirmSaveTemplate()" style="padding:9px 20px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:var(--sans);font-size:.85rem;font-weight:600">Guardar</button>
+    </div>
+  </div>
+</div>
+<div id="app-breakdown" style="display:none; padding:32px 40px; max-width:980px; margin:0 auto;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;gap:12px;flex-wrap:wrap">
+    <h2 style="font-family:var(--sans);font-weight:700;font-size:1.5rem;">Desglose detallado</h2>
+    <div style="display:flex;gap:8px">
+      <button class="btn-export" style="margin:0;width:auto;padding:9px 18px;font-size:.8rem" onclick="exportCliente()">⬇ PDF Cliente</button>
+      <button class="btn-export" style="margin:0;width:auto;padding:9px 18px;font-size:.8rem;background:var(--gold);color:var(--ink)" onclick="exportAgencia()">⬇ PDF Agencia</button>
+    </div>
+  </div>
+  <div id="breakdown-content"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════════
+const TEAM = [
+  { id:1,  name:"NC",         sueldo:90000 },
+  { id:2,  name:"Jesus ALG",  sueldo:30000 },
+  { id:3,  name:"Santiago",   sueldo:30000 },
+  { id:4,  name:"INGRID",     sueldo:20000 },
+  { id:7,  name:"Roberto",    sueldo:20000 },
+  { id:8,  name:"Alfredo",    sueldo:20000 },
+  { id:10, name:"Ana",        sueldo:20000 },
+  { id:11, name:"JUNTAS**",   sueldo:30000 },
+  { id:12, name:"Rocio",      sueldo:20000 },
+  { id:13, name:"Kathia",     sueldo:17000 },
+  { id:14, name:"Gamaliel",   sueldo:14000 },
+  { id:15, name:"Com. MGR.",  sueldo:15000 },
+  { id:16, name:"CARMINA",    sueldo:16500 },
+  { id:17, name:"Copy 2",     sueldo:15000 },
+  { id:18, name:"Isaac",      sueldo:14000 },
+  { id:99, name:"Outsourcing",sueldo:0 },
+];
+const FACTOR = 1/20/6;   // horas efectivas por peso de sueldo
+const getRate = id => {
+  const m = TEAM.find(t => t.id === id);
+  return m ? m.sueldo * FACTOR : 0;
+};
+
+let services = [];
+let ppMonths = 1;
+let svcCounter = 0;
+let phaseCounter = 0;
+let actCounter = 0;
+
+// ══════════════════════════════════════════════════════
+// STATE HELPERS
+// ══════════════════════════════════════════════════════
+function addService(name='') {
+  const id = ++svcCounter;
+  services.push({
+    id, name: name || `Servicio ${id}`,
+    phases: [],
+    juntas: { type:'juntas', hrs:0, desc:'Meetings / Project Overhead' },
+    outsourcing: [],
+    showJuntas: false,
+  });
+  renderServices();
+  addPhase(id, 'Fase 1A');
+  refreshSidebar();
+}
+
+function addPhase(svcId, name='') {
+  const svc = services.find(s => s.id === svcId);
+  if (!svc) return;
+  const id = ++phaseCounter;
+  svc.phases.push({ id, name: name || `Fase ${svc.phases.length+1}`, activities: [] });
+  renderServices();
+  addActivity(svcId, id);
+  refreshSidebar();
+}
+
+function addActivity(svcId, phaseId) {
+  const svc = services.find(s => s.id === svcId);
+  if (!svc) return;
+  const ph = svc.phases.find(p => p.id === phaseId);
+  if (!ph) return;
+  const id = ++actCounter;
+  ph.activities.push({ id, desc:'', memberId: 3, hrs: 0 });
+  renderServices();
+  refreshSidebar();
+}
+
+function deleteService(svcId) {
+  services = services.filter(s => s.id !== svcId);
+  renderServices();
+  refreshSidebar();
+}
+
+function deletePhase(svcId, phaseId) {
+  const svc = services.find(s => s.id === svcId);
+  if (!svc) return;
+  svc.phases = svc.phases.filter(p => p.id !== phaseId);
+  renderServices();
+  refreshSidebar();
+}
+
+function deleteActivity(svcId, phaseId, actId) {
+  const svc = services.find(s => s.id === svcId);
+  if (!svc) return;
+  const ph = svc.phases.find(p => p.id === phaseId);
+  if (!ph) return;
+  ph.activities = ph.activities.filter(a => a.id !== actId);
+  renderServices();
+  refreshSidebar();
+}
+
+function toggleJuntas(svcId) {
+  const svc = services.find(s => s.id === svcId);
+  if (!svc) return;
+  svc.showJuntas = !svc.showJuntas;
+  if (!svc.showJuntas) svc.juntas.hrs = 0;
+  renderServices(); refreshSidebar();
+}
+
+function updateJuntas(svcId, field, value) {
+  const svc = services.find(s => s.id === svcId);
+  if (!svc) return;
+  if (field === 'hrs')  svc.juntas.hrs  = parseFloat(value) || 0;
+  if (field === 'desc') svc.juntas.desc = value;
+  refreshSidebar();
+}
+
+function addOutsourcing(svcId) {
+  const svc = services.find(s => s.id === svcId);
+  if (!svc) return;
+  svc.outsourcing.push({ type:'outsourcing', id: ++actCounter, desc:'', costo:0, markup:0.25 });
+  renderServices(); refreshSidebar();
+}
+
+function deleteOutsourcing(svcId, oId) {
+  const svc = services.find(s => s.id === svcId);
+  if (!svc) return;
+  svc.outsourcing = svc.outsourcing.filter(o => o.id !== oId);
+  renderServices(); refreshSidebar();
+}
+
+function updateOutsourcing(svcId, oId, field, value) {
+  const svc = services.find(s => s.id === svcId);
+  if (!svc) return;
+  const o = svc.outsourcing.find(x => x.id === oId);
+  if (!o) return;
+  if (field === 'costo')  o.costo  = parseFloat(value) || 0;
+  if (field === 'markup') o.markup = (parseFloat(value) || 25) / 100;
+  if (field === 'desc')   o.desc   = value;
+  refreshSidebar();
+}
+
+function updateField(svcId, phaseId, actId, field, value) {
+  const svc = services.find(s => s.id === svcId);
+  if (!svc) return;
+  if (field === 'svcName') { svc.name = value; refreshSidebar(); return; }
+  const ph = svc.phases.find(p => p.id === phaseId);
+  if (!ph) return;
+  if (field === 'phaseName') { ph.name = value; return; }
+  const act = ph.activities.find(a => a.id === actId);
+  if (!act) return;
+  if (field === 'hrs') act.hrs = parseFloat(value) || 0;
+  if (field === 'desc') act.desc = value;
+  if (field === 'member') act.memberId = parseInt(value);
+  refreshSidebar();
+}
+
+// ══════════════════════════════════════════════════════
+// CALCULATIONS
+// ══════════════════════════════════════════════════════
+function getParams() {
+  return {
+    overhead: parseFloat(document.getElementById('p-overhead').value) || 1.5,
+    util:     parseFloat(document.getElementById('p-util').value) || 0.5,
+    dcto:     (parseFloat(document.getElementById('p-dcto').value) || 0) / 100,
+    dcto2:    (parseFloat(document.getElementById('p-dcto2').value) || 0) / 100,
+  };
+}
+
+function calcActivity(act, params) {
+  // ── OUTSOURCING: input = costo proveedor $, markup fijo sobre costo ──
+  // Fórmula Excel: G=D (costo directo=monto), H=G*E (overhead=costo*markup%)
+  // J=G+H, K=J/(1-markup%), O=K*(1-dcto)
+  if (act.type === 'outsourcing') {
+    const costoDir   = act.costo || 0;
+    const markup     = act.markup != null ? act.markup : 0.25;
+    const overhead   = costoDir * markup;
+    const costoTotal = costoDir + overhead;
+    const precioLleno    = markup < 1 ? costoTotal / (1 - markup) : costoTotal;
+    const precioDescuento = precioLleno * (1 - params.dcto);
+    return { costoDir, overhead, costoTotal, precioLleno, precioDescuento };
+  }
+  // ── JUNTAS: horas × tarifa JUNTAS** (ID=11) × overhead normal × util normal ──
+  // Fórmula Excel idéntica a actividad normal, pero siempre usa ID=11 (JUNTAS**)
+  if (act.type === 'juntas') {
+    const rate       = getRate(11);
+    const costoDir   = (act.hrs || 0) * rate;
+    const overhead   = costoDir * params.overhead;
+    const costoTotal = costoDir + overhead;
+    const precioLleno    = params.util > 0 ? costoTotal / (1 - params.util) : costoTotal * 2;
+    const precioDescuento = precioLleno * (1 - params.dcto);
+    return { costoDir, overhead, costoTotal, precioLleno, precioDescuento };
+  }
+  // ── ACTIVIDAD NORMAL ──
+  const rate = getRate(act.memberId);
+  const costoDir = (act.hrs || 0) * rate;
+  const overhead = costoDir * params.overhead;
+  const costoTotal = costoDir + overhead;
+  const precioLleno = params.util > 0 ? costoTotal / (1 - params.util) : costoTotal * 2;
+  const precioDescuento = precioLleno * (1 - params.dcto);
+  return { costoDir, overhead, costoTotal, precioLleno, precioDescuento };
+}
+
+function calcService(svc, params) {
+  let hrs=0, costoTotal=0, precioLleno=0, precioDescuento=0;
+  svc.phases.forEach(ph => ph.activities.forEach(act => {
+    const c = calcActivity(act, params);
+    hrs += act.hrs || 0;
+    costoTotal += c.costoTotal;
+    precioLleno += c.precioLleno;
+    precioDescuento += c.precioDescuento;
+  }));
+  // Juntas
+  if (svc.juntas && svc.juntas.hrs > 0) {
+    const c = calcActivity(svc.juntas, params);
+    hrs += svc.juntas.hrs;
+    costoTotal += c.costoTotal;
+    precioLleno += c.precioLleno;
+    precioDescuento += c.precioDescuento;
+  }
+  // Outsourcing (puede haber varios)
+  (svc.outsourcing || []).forEach(o => {
+    const c = calcActivity(o, params);
+    costoTotal += c.costoTotal;
+    precioLleno += c.precioLleno;
+    precioDescuento += c.precioDescuento;
+  });
+  return { hrs, costoTotal, precioLleno, precioDescuento };
+}
+
+function calcTotal(params) {
+  let hrs=0, costoTotal=0, precioLleno=0, precioDescuento=0;
+  services.forEach(svc => {
+    const c = calcService(svc, params);
+    hrs += c.hrs;
+    costoTotal += c.costoTotal;
+    precioLleno += c.precioLleno;
+    precioDescuento += c.precioDescuento;
+  });
+  const precioFinal = precioDescuento * (1 - params.dcto2);
+  const utilidad = precioFinal - costoTotal;
+  const pctUtil = precioFinal > 0 ? utilidad / precioFinal : 0;
+  return { hrs, costoTotal, precioLleno, precioDescuento, precioFinal, utilidad, pctUtil };
+}
+
+function teamBreakdown(params) {
+  const map = {};
+  services.forEach(svc => {
+    svc.phases.forEach(ph => ph.activities.forEach(act => {
+      const m = TEAM.find(t => t.id === act.memberId);
+      const name = m ? m.name : 'Desconocido';
+      map[name] = (map[name] || 0) + (act.hrs || 0);
+    }));
+    if (svc.juntas && svc.juntas.hrs > 0)
+      map['JUNTAS**'] = (map['JUNTAS**'] || 0) + svc.juntas.hrs;
+  });
+  return Object.entries(map).filter(([,h])=>h>0).sort((a,b)=>b[1]-a[1]);
+}
+
+// ══════════════════════════════════════════════════════
+// FORMAT
+// ══════════════════════════════════════════════════════
+const fmt = n => '$' + n.toLocaleString('es-MX', {minimumFractionDigits:0, maximumFractionDigits:0});
+const fmtPct = n => (n*100).toFixed(1) + '%';
+
+// ══════════════════════════════════════════════════════
+// RENDER SERVICES
+// ══════════════════════════════════════════════════════
+function buildTeamOptions(selected) {
+  return TEAM.map(m =>
+    `<option value="${m.id}" ${m.id===selected?'selected':''}>${m.name}</option>`
+  ).join('');
+}
+
+function renderServices() {
+  const container = document.getElementById('services-list');
+  container.innerHTML = '';
+  services.forEach(svc => {
+    const params = getParams();
+    const sc = calcService(svc, params);
+    const hasVal = sc.precioDescuento > 0;
+
+    const card = document.createElement('div');
+    card.className = 'service-card';
+    card.id = `svc-${svc.id}`;
+
+    let phasesHTML = svc.phases.map(ph => {
+      let actsHTML = ph.activities.map(act => `
+        <div class="act-row" id="act-${act.id}">
+          <textarea class="act-desc" rows="1" placeholder="Actividad / Entregable…"
+            oninput="updateField(${svc.id},${ph.id},${act.id},'desc',this.value)"
+          >${act.desc}</textarea>
+          <select class="act-select"
+            onchange="updateField(${svc.id},${ph.id},${act.id},'member',this.value)">
+            ${buildTeamOptions(act.memberId)}
+          </select>
+          <input type="number" class="act-hrs" placeholder="0" min="0" step="0.5"
+            value="${act.hrs||''}"
+            oninput="updateField(${svc.id},${ph.id},${act.id},'hrs',this.value)">
+          <button class="btn-del-act" onclick="deleteActivity(${svc.id},${ph.id},${act.id})" title="Eliminar">×</button>
+        </div>
+      `).join('');
+
+      return `
+        <div class="phase-block" id="phase-${ph.id}">
+          <div class="phase-header">
+            <span class="phase-tag">${ph.name.slice(0,6) || 'FASE'}</span>
+            <input class="phase-name-input" type="text" value="${ph.name}"
+              oninput="updateField(${svc.id},${ph.id},null,'phaseName',this.value)">
+            <button class="btn-del-phase" onclick="deletePhase(${svc.id},${ph.id})" title="Eliminar fase">✕</button>
+          </div>
+          <div class="act-header-row">
+            <span>Actividad / Entregable</span>
+            <span>Responsable</span>
+            <span>Hrs</span>
+            <span></span>
+          </div>
+          <div class="activities-table">${actsHTML}</div>
+          <div class="phase-footer">
+            <button class="btn-add-act" onclick="addActivity(${svc.id},${ph.id})">＋ Actividad</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    card.innerHTML = `
+      <div class="service-header" onclick="toggleService(${svc.id}, event)">
+        <div class="service-toggle">+</div>
+        <input class="service-name-input" type="text" value="${svc.name}"
+          placeholder="Nombre del servicio"
+          oninput="updateField(${svc.id},null,null,'svcName',this.value)"
+          onclick="event.stopPropagation()">
+        <span class="service-price-tag ${hasVal?'has-value':''}">
+          ${hasVal ? fmt(sc.precioDescuento) : '— sin horas'}
+        </span>
+      </div>
+      <div class="service-body">
+        ${phasesHTML}
+        ${renderJuntasBlock(svc)}
+        ${renderOutsourcingBlock(svc)}
+        <div class="service-footer">
+          <button class="btn-add-phase" onclick="addPhase(${svc.id})">＋ Fase</button>
+          <button class="btn-special juntas-btn" onclick="toggleJuntas(${svc.id})">${svc.showJuntas ? '✕ Quitar Juntas' : '⏱ + Juntas'}</button>
+          <button class="btn-special outsrc-btn" onclick="addOutsourcing(${svc.id})">📦 + Proveedor</button>
+          <button class="btn-special" style="color:#7a7f94;border-color:rgba(120,120,140,.3)" onclick="saveServiceAsTemplate(${svc.id})">💾 Guardar template</button>
+          <button class="btn-del-service" onclick="deleteService(${svc.id})">✕ Servicio</button>
+        </div>
+      </div>`;
+
+    container.appendChild(card);
+
+    // restore open state
+    if (svc._open) card.classList.add('open');
+  });
+}
+
+function renderJuntasBlock(svc) {
+  if (!svc.showJuntas) return '';
+  const j = svc.juntas;
+  return `
+    <div class="special-block juntas-block">
+      <div class="special-header">
+        <span class="special-tag juntas-tag">⏱ JUNTAS</span>
+        <span class="special-label">Meetings / Project Overhead</span>
+        <span class="special-note">Tarifa JUNTAS** · mismo cálculo que actividad normal</span>
+      </div>
+      <div class="act-header-row" style="grid-template-columns:1fr 140px 80px">
+        <span>Descripción</span><span>Responsable</span><span>Hrs</span>
+      </div>
+      <div class="act-row" style="grid-template-columns:1fr 140px 80px">
+        <textarea class="act-desc" rows="1" placeholder="Ej. Kick-off, revisiones, presentaciones…"
+          oninput="updateJuntas(${svc.id},'desc',this.value)">${j.desc}</textarea>
+        <div class="special-fixed-cell">JUNTAS**</div>
+        <input type="number" class="act-hrs" placeholder="0" min="0" step="0.5"
+          value="${j.hrs || ''}" oninput="updateJuntas(${svc.id},'hrs',this.value)">
+      </div>
+    </div>`;
+}
+
+function renderOutsourcingBlock(svc) {
+  if (!svc.outsourcing || svc.outsourcing.length === 0) return '';
+  const rows = svc.outsourcing.map(o => `
+    <div class="act-row outsrc-row">
+      <textarea class="act-desc" rows="1" placeholder="Nombre del proveedor / descripción…"
+        oninput="updateOutsourcing(${svc.id},${o.id},'desc',this.value)">${o.desc}</textarea>
+      <div class="outsrc-field">
+        <span class="outsrc-label">Costo proveedor ($)</span>
+        <input type="number" class="act-hrs" placeholder="0" min="0" step="100"
+          value="${o.costo || ''}" oninput="updateOutsourcing(${svc.id},${o.id},'costo',this.value)" style="text-align:right">
+      </div>
+      <div class="outsrc-field" style="flex-direction:row;align-items:center;gap:4px">
+        <span class="outsrc-label" style="width:auto;white-space:nowrap">Markup</span>
+        <input type="number" class="act-hrs" placeholder="25" min="0" max="100" step="1"
+          value="${Math.round((o.markup||0.25)*100)}"
+          oninput="updateOutsourcing(${svc.id},${o.id},'markup',this.value)"
+          style="width:44px;text-align:right">
+        <span class="outsrc-label" style="width:auto">%</span>
+      </div>
+      <button class="btn-del-act" onclick="deleteOutsourcing(${svc.id},${o.id})">×</button>
+    </div>`).join('');
+
+  return `
+    <div class="special-block outsrc-block">
+      <div class="special-header">
+        <span class="special-tag outsrc-tag">📦 PROVEEDOR</span>
+        <span class="special-label">Outsourcing / Proveedores</span>
+        <span class="special-note">Costo en $ · markup sobre costo · sin overhead ALG</span>
+      </div>
+      <div class="act-header-row outsrc-row-hdr">
+        <span>Proveedor / Descripción</span><span>Costo ($)</span><span>Markup</span><span></span>
+      </div>
+      ${rows}
+    </div>`;
+}
+
+function toggleService(svcId, e) {
+  if (e.target.tagName === 'INPUT') return;
+  const card = document.getElementById(`svc-${svcId}`);
+  const svc = services.find(s => s.id === svcId);
+  svc._open = !svc._open;
+  card.classList.toggle('open', svc._open);
+}
+
+// ══════════════════════════════════════════════════════
+// REFRESH SIDEBAR
+// ══════════════════════════════════════════════════════
+function refreshSidebar() {
+  const params = getParams();
+  const tot = calcTotal(params);
+
+  // Per-service list
+  const svcList = document.getElementById('sb-services-list');
+  svcList.innerHTML = services.map(svc => {
+    const sc = calcService(svc, params);
+    return `
+      <div class="service-summary-item">
+        <div class="ssi-name">${svc.name}</div>
+        <div class="ssi-row">
+          <span class="ssi-hrs">${sc.hrs.toFixed(1)} hrs</span>
+          <span class="ssi-price">${fmt(sc.precioDescuento)}</span>
+        </div>
+      </div>`;
+  }).join('') || '<div style="font-size:.75rem;color:rgba(255,255,255,.3);padding:8px 0">Sin servicios</div>';
+
+  document.getElementById('sb-hrs').textContent = tot.hrs.toFixed(1) + ' hrs';
+  document.getElementById('sb-costo').textContent = fmt(tot.costoTotal);
+  document.getElementById('sb-precio-lleno').textContent = fmt(tot.precioLleno);
+  document.getElementById('sb-final').textContent = fmt(tot.precioFinal);
+  document.getElementById('sb-utilidad').textContent =
+    `Utilidad: ${fmt(tot.utilidad)} · ${fmtPct(tot.pctUtil)}`;
+
+  // Payment plan
+  refreshPaymentPlan(tot.precioFinal);
+
+  // Team breakdown
+  const tb = teamBreakdown(params);
+  document.getElementById('tb-list').innerHTML = tb.map(([name, hrs]) =>
+    `<div class="tb-row"><span class="tb-name">${name}</span><span class="tb-hrs">${hrs.toFixed(1)} hrs</span></div>`
+  ).join('') || '<div style="font-size:.75rem;color:rgba(255,255,255,.3);padding:4px 0">Sin asignaciones</div>';
+}
+
+// ══════════════════════════════════════════════════════
+// PAYMENT PLAN
+// ══════════════════════════════════════════════════════
+function setPP(n) {
+  ppMonths = n;
+  document.querySelectorAll('.pp-btn').forEach(b => b.classList.remove('active'));
+  const ids = {1:'pp1',2:'pp2',3:'pp3',6:'pp6',12:'pp12'};
+  if (ids[n]) document.getElementById(ids[n]).classList.add('active');
+  const params = getParams();
+  const tot = calcTotal(params);
+  refreshPaymentPlan(tot.precioFinal);
+}
+
+function refreshPaymentPlan(precioFinal) {
+  const discRow = document.getElementById('pp-disc-row');
+  const DISC_UNICO = 0.05;
+  if (ppMonths === 1) {
+    const withDisc = precioFinal * (1 - DISC_UNICO);
+    document.getElementById('pp-total').textContent = fmt(withDisc);
+    document.getElementById('pp-n').textContent = '1';
+    document.getElementById('pp-disc').textContent = fmt(precioFinal * DISC_UNICO);
+    document.getElementById('pp-monto').textContent = fmt(withDisc);
+    discRow.style.display = '';
+  } else {
+    document.getElementById('pp-total').textContent = fmt(precioFinal);
+    document.getElementById('pp-n').textContent = ppMonths;
+    discRow.style.display = 'none';
+    document.getElementById('pp-monto').textContent = fmt(precioFinal / ppMonths);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════════════
+function showTab(tab) {
+  document.querySelectorAll('header nav button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+
+  document.getElementById('app-builder').style.display   = 'none';
+  document.getElementById('app-breakdown').style.display = 'none';
+  document.getElementById('app-templates').style.display = 'none';
+
+  if (tab === 'builder') {
+    document.getElementById('app-builder').style.display = '';
+  } else if (tab === 'breakdown') {
+    document.getElementById('app-breakdown').style.display = 'block';
+    renderBreakdown();
+  } else if (tab === 'templates') {
+    document.getElementById('app-templates').style.display = 'block';
+    renderTemplatesView();
+  }
+}
+
+function renderBreakdown() {
+  const params = getParams();
+  const container = document.getElementById('breakdown-content');
+  const tot = calcTotal(params);
+  const pagoMes = ppMonths > 0 ? tot.precioFinal / ppMonths : tot.precioFinal;
+
+  const tS   = `width:100%;border-collapse:collapse;margin-bottom:24px;font-size:.84rem;`;
+  const thL  = `background:#1a2f5e;color:#fff;padding:8px 12px;text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;`;
+  const thR  = `background:#1a2f5e;color:#fff;padding:8px 12px;text-align:right;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;`;
+  const tdL  = `padding:8px 12px;border-bottom:1px solid #e3e1d8;vertical-align:middle;`;
+  const tdR  = `padding:8px 12px;border-bottom:1px solid #e3e1d8;text-align:right;font-family:'DM Mono',monospace;font-size:.82rem;`;
+
+  let html = '';
+  services.forEach(svc => {
+    const sc = calcService(svc, params);
+    const svcMes = ppMonths > 0 ? sc.precioDescuento / ppMonths : sc.precioDescuento;
+
+    html += `<h3 style="font-family:'Monument Grotesk',sans-serif;font-weight:700;font-size:1rem;margin:0 0 6px;padding:10px 14px;background:#f8f7f4;border-left:4px solid #1a3a8f;">${svc.name}</h3>`;
+    html += `<table style="${tS}"><thead><tr>
+      <th style="${thL}">Fase</th>
+      <th style="${thL}">Actividad / Entregable</th>
+      <th style="${thR}">Precio s/Dcto</th>
+      <th style="${thR}">Precio c/Dcto</th>
+      <th style="${thR}">Pago / mes</th>
+    </tr></thead><tbody>`;
+
+    svc.phases.forEach(ph => {
+      ph.activities.forEach((act, i) => {
+        const c = calcActivity(act, params);
+        const ap = ppMonths > 0 ? c.precioDescuento / ppMonths : c.precioDescuento;
+        html += `<tr>
+          <td style="${tdL};color:#2e5090;font-weight:600;white-space:nowrap">${i===0 ? ph.name : ''}</td>
+          <td style="${tdL}">${act.desc || '—'}</td>
+          <td style="${tdR}">${fmt(c.precioLleno)}</td>
+          <td style="${tdR};color:#1a6b3c;font-weight:600">${fmt(c.precioDescuento)}</td>
+          <td style="${tdR};color:#c8972a">${fmt(ap)}</td>
+        </tr>`;
+      });
+    });
+
+    if (svc.juntas && svc.juntas.hrs > 0) {
+      const c = calcActivity(svc.juntas, params);
+      const jp = ppMonths > 0 ? c.precioDescuento / ppMonths : c.precioDescuento;
+      html += `<tr style="background:#f0f4ff">
+        <td style="${tdL};color:#1a3a8f;font-style:italic;white-space:nowrap">Juntas</td>
+        <td style="${tdL};font-style:italic">${svc.juntas.desc || 'Meetings / Project Overhead'}</td>
+        <td style="${tdR}">${fmt(c.precioLleno)}</td>
+        <td style="${tdR};color:#1a6b3c">${fmt(c.precioDescuento)}</td>
+        <td style="${tdR};color:#c8972a">${fmt(jp)}</td>
+      </tr>`;
+    }
+    (svc.outsourcing || []).forEach(o => {
+      const c = calcActivity(o, params);
+      const op = ppMonths > 0 ? c.precioDescuento / ppMonths : c.precioDescuento;
+      html += `<tr style="background:#fff8f0">
+        <td style="${tdL};color:#b45309;font-style:italic;white-space:nowrap">Proveedor</td>
+        <td style="${tdL};font-style:italic">${o.desc || 'Outsourcing'} (${Math.round((o.markup||.25)*100)}% markup)</td>
+        <td style="${tdR}">${fmt(c.precioLleno)}</td>
+        <td style="${tdR};color:#1a6b3c">${fmt(c.precioDescuento)}</td>
+        <td style="${tdR};color:#c8972a">${fmt(op)}</td>
+      </tr>`;
+    });
+
+    html += `<tr style="background:#f2f2f2">
+      <td colspan="2" style="${tdL};font-weight:700">SUBTOTAL ${svc.name}</td>
+      <td style="${tdR};font-weight:700">${fmt(sc.precioLleno)}</td>
+      <td style="${tdR};font-weight:700;color:#1a6b3c">${fmt(sc.precioDescuento)}</td>
+      <td style="${tdR};font-weight:700;color:#c8972a">${fmt(svcMes)}</td>
+    </tr></tbody></table>`;
+  });
+
+  // Totals + IVA
+  const iva         = tot.precioFinal * 0.16;
+  const totalConIva = tot.precioFinal + iva;
+  const montoMes    = ppMonths > 0 ? tot.precioFinal / ppMonths : tot.precioFinal;
+  const montoMesIva = montoMes * 1.16;
+
+  html += `
+    <div style="background:#1a2f5e;color:#fff;border-radius:8px;overflow:hidden;margin-top:4px">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-bottom:1px solid rgba(255,255,255,.12)">
+        <div style="padding:16px 20px">
+          <div style="font-size:.6rem;opacity:.5;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Precio s/descuento</div>
+          <div style="font-family:'DM Mono',monospace;font-size:1rem">${fmt(tot.precioLleno)}</div>
+        </div>
+        <div style="padding:16px 20px;border-left:1px solid rgba(255,255,255,.1)">
+          <div style="font-size:.6rem;opacity:.5;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Precio c/descuento</div>
+          <div style="font-family:'DM Mono',monospace;font-size:1rem">${fmt(tot.precioFinal)}</div>
+        </div>
+        <div style="padding:16px 20px;border-left:1px solid rgba(255,255,255,.1)">
+          <div style="font-size:.6rem;opacity:.5;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Pago mensual (${ppMonths} ${ppMonths===1?'pago':'meses'})</div>
+          <div style="font-family:'DM Mono',monospace;font-size:1rem;color:#c8972a">${fmt(montoMes)}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;background:rgba(0,0,0,.15)">
+        <div style="padding:14px 20px">
+          <div style="font-size:.6rem;opacity:.5;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">IVA 16%</div>
+          <div style="font-family:'DM Mono',monospace;font-size:.95rem;opacity:.8">${fmt(iva)}</div>
+        </div>
+        <div style="padding:14px 20px;border-left:1px solid rgba(255,255,255,.1)">
+          <div style="font-size:.6rem;opacity:.5;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Total con IVA</div>
+          <div style="font-family:'DM Mono',monospace;font-size:1.25rem;font-weight:700;color:#c8972a">${fmt(totalConIva)}</div>
+        </div>
+        <div style="padding:14px 20px;border-left:1px solid rgba(255,255,255,.1)">
+          <div style="font-size:.6rem;opacity:.5;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Pago mensual + IVA</div>
+          <div style="font-family:'DM Mono',monospace;font-size:1rem;color:#c8972a">${fmt(montoMesIva)}</div>
+        </div>
+      </div>
+    </div>`;
+
+  container.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════
+// EXPORTS — PDF CLIENTE y PDF AGENCIA
+// ══════════════════════════════════════════════════════
+const PDF_CSS = `
+  body{font-family:'Monument Grotesk',sans-serif;color:#0f1117;padding:36px 44px;max-width:960px;margin:0 auto;font-size:12.5px;}
+  h1{font-weight:700;font-size:1.7rem;margin-bottom:3px;}
+  .sub{color:#7a7f94;margin-bottom:16px;font-size:.85rem;}
+  .meta{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0 22px;padding:13px 16px;background:#f8f7f4;}
+  .meta label{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:#7a7f94;display:block;margin-bottom:2px;}
+  .meta span{font-weight:600;}
+  table{width:100%;border-collapse:collapse;margin-bottom:20px;}
+  thead tr{background:#1a2f5e;color:#fff;}
+  th{padding:7px 10px;text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;}
+  th.r{text-align:right;}
+  td{padding:6px 10px;border-bottom:1px solid #e3e1d8;font-size:12px;}
+  td.n{text-align:right;font-family:'DM Mono',monospace;font-size:11.5px;}
+  tr.sub td{background:#f2f2f2;font-weight:700;}
+  tr.jrow td{background:#f0f4ff;font-style:italic;}
+  tr.orow td{background:#fff8f0;font-style:italic;}
+  .svc{font-weight:700;font-size:.92rem;padding:9px 12px;background:#f8f7f4;border-left:4px solid #1a3a8f;margin:18px 0 6px;}
+  .totbox{background:#1a2f5e;color:#fff;border-radius:6px;overflow:hidden;margin-top:14px;}
+  .trow{display:grid;gap:0;}
+  .tcell{padding:13px 18px;border-right:1px solid rgba(255,255,255,.1);}
+  .tcell:last-child{border-right:none;}
+  .tcell label{font-size:9px;opacity:.45;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:3px;}
+  .tcell span{font-family:'DM Mono',monospace;font-size:.95rem;}
+  .tcell.big span{font-size:1.2rem;font-weight:700;color:#c8972a;}
+  .ivrow{background:rgba(0,0,0,.15);}
+  .footer{margin-top:28px;padding-top:10px;border-top:1px solid #e3e1d8;font-size:10px;color:#7a7f94;}
+  @media print{body{padding:20px;}}
+`;
+
+function pdfOpen(html, title) {
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+  w.onload = () => w.print();
+}
+
+function exportCliente() {
+  const params  = getParams();
+  const tot     = calcTotal(params);
+  const cliente = document.getElementById('f-cliente').value || 'Cliente';
+  const proyecto= document.getElementById('f-proyecto').value || 'Proyecto';
+  const fecha   = document.getElementById('f-fecha').value || new Date().toLocaleDateString('es-MX');
+  const dcto    = document.getElementById('p-dcto').value;
+  const iva     = tot.precioFinal * 0.16;
+  const conIva  = tot.precioFinal + iva;
+  const mes     = ppMonths > 0 ? tot.precioFinal / ppMonths : tot.precioFinal;
+  const mesIva  = mes * 1.16;
+
+  let body = '';
+  services.forEach(svc => {
+    const sc = calcService(svc, params);
+    const svcMes = ppMonths > 0 ? sc.precioDescuento / ppMonths : sc.precioDescuento;
+    body += `<div class="svc">${svc.name}</div>
+    <table><thead><tr>
+      <th>Fase</th><th>Actividad / Entregable</th>
+      <th class="r">Precio s/Dcto</th><th class="r">Precio c/Dcto</th><th class="r">Pago / mes</th>
+    </tr></thead><tbody>`;
+    svc.phases.forEach(ph => {
+      ph.activities.forEach((act, i) => {
+        const c = calcActivity(act, params);
+        const ap = ppMonths > 0 ? c.precioDescuento / ppMonths : c.precioDescuento;
+        body += `<tr>
+          <td style="color:#2e5090;font-weight:600;white-space:nowrap">${i===0?ph.name:''}</td>
+          <td>${act.desc||'—'}</td>
+          <td class="n">${fmt(c.precioLleno)}</td>
+          <td class="n" style="color:#1a6b3c;font-weight:600">${fmt(c.precioDescuento)}</td>
+          <td class="n" style="color:#c8972a">${fmt(ap)}</td>
+        </tr>`;
+      });
+    });
+    if (svc.juntas && svc.juntas.hrs > 0) {
+      const c = calcActivity(svc.juntas, params);
+      const jp = ppMonths > 0 ? c.precioDescuento / ppMonths : c.precioDescuento;
+      body += `<tr class="jrow"><td style="color:#1a3a8f">Juntas</td><td>${svc.juntas.desc||'Meetings'}</td><td class="n">${fmt(c.precioLleno)}</td><td class="n" style="color:#1a6b3c">${fmt(c.precioDescuento)}</td><td class="n" style="color:#c8972a">${fmt(jp)}</td></tr>`;
+    }
+    (svc.outsourcing||[]).forEach(o => {
+      const c = calcActivity(o, params);
+      const op = ppMonths > 0 ? c.precioDescuento / ppMonths : c.precioDescuento;
+      body += `<tr class="orow"><td style="color:#b45309">Proveedor</td><td>${o.desc||'Outsourcing'}</td><td class="n">${fmt(c.precioLleno)}</td><td class="n" style="color:#1a6b3c">${fmt(c.precioDescuento)}</td><td class="n" style="color:#c8972a">${fmt(op)}</td></tr>`;
+    });
+    body += `<tr class="sub"><td colspan="2">SUBTOTAL ${svc.name}</td><td class="n">${fmt(sc.precioLleno)}</td><td class="n" style="color:#1a6b3c">${fmt(sc.precioDescuento)}</td><td class="n" style="color:#c8972a">${fmt(svcMes)}</td></tr>`;
+    body += `</tbody></table>`;
+  });
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <title>Cotización — ${cliente}</title>
+    <link href="https://api.fontshare.com/v2/css?f[]=monument-grotesk@400,500,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>${PDF_CSS}</style></head><body>
+    <h1>Cotización de servicios</h1>
+    <div class="sub">ALG Agency</div>
+    <div class="meta">
+      <div><label>Cliente</label><span>${cliente}</span></div>
+      <div><label>Proyecto</label><span>${proyecto}</span></div>
+      <div><label>Fecha</label><span>${fecha}</span></div>
+      <div><label>Descuento</label><span>${dcto}%</span></div>
+    </div>
+    ${body}
+    <div class="totbox">
+      <div class="trow" style="grid-template-columns:repeat(3,1fr)">
+        <div class="tcell"><label>Precio s/descuento</label><span>${fmt(tot.precioLleno)}</span></div>
+        <div class="tcell"><label>Precio c/descuento</label><span>${fmt(tot.precioFinal)}</span></div>
+        <div class="tcell"><label>Pago mensual (${ppMonths} ${ppMonths===1?'pago':'meses'})</label><span style="color:#c8972a">${fmt(mes)}</span></div>
+      </div>
+      <div class="trow ivrow" style="grid-template-columns:repeat(3,1fr)">
+        <div class="tcell"><label>IVA 16%</label><span style="opacity:.7">${fmt(iva)}</span></div>
+        <div class="tcell big"><label>Total con IVA</label><span>${fmt(conIva)}</span></div>
+        <div class="tcell"><label>Pago mensual + IVA</label><span style="color:#c8972a">${fmt(mesIva)}</span></div>
+      </div>
+    </div>
+    <div class="footer">Esta cotización es referencial y puede estar sujeta a cambios tras revisión de entregables con el cliente.</div>
+  </body></html>`;
+  pdfOpen(html);
+}
+
+function exportAgencia() {
+  const params  = getParams();
+  const tot     = calcTotal(params);
+  const cliente = document.getElementById('f-cliente').value || 'Cliente';
+  const proyecto= document.getElementById('f-proyecto').value || 'Proyecto';
+  const fecha   = document.getElementById('f-fecha').value || new Date().toLocaleDateString('es-MX');
+  const iva     = tot.precioFinal * 0.16;
+  const conIva  = tot.precioFinal + iva;
+  const mes     = ppMonths > 0 ? tot.precioFinal / ppMonths : tot.precioFinal;
+
+  let body = '';
+  services.forEach(svc => {
+    const sc = calcService(svc, params);
+    const svcUtil  = sc.precioDescuento - sc.costoTotal;
+    const svcPct   = sc.precioDescuento > 0 ? (svcUtil/sc.precioDescuento*100).toFixed(1) : '0.0';
+    body += `<div class="svc">${svc.name}</div>
+    <table><thead><tr>
+      <th>Fase</th><th>Actividad</th><th>Responsable</th>
+      <th class="r">Hrs</th><th class="r">Costo ALG</th>
+      <th class="r">Precio s/Dcto</th><th class="r">Precio c/Dcto</th>
+      <th class="r">Utilidad</th><th class="r">% Util</th>
+    </tr></thead><tbody>`;
+    svc.phases.forEach(ph => {
+      ph.activities.forEach((act, i) => {
+        const c    = calcActivity(act, params);
+        const util = c.precioDescuento - c.costoTotal;
+        const pct  = c.precioDescuento > 0 ? (util/c.precioDescuento*100).toFixed(1) : '0.0';
+        const mb   = TEAM.find(t => t.id === act.memberId);
+        body += `<tr>
+          <td style="color:#2e5090;font-weight:600;white-space:nowrap">${i===0?ph.name:''}</td>
+          <td>${act.desc||'—'}</td>
+          <td style="white-space:nowrap">${mb?mb.name:'—'}</td>
+          <td class="n">${(act.hrs||0).toFixed(1)}</td>
+          <td class="n">${fmt(c.costoTotal)}</td>
+          <td class="n">${fmt(c.precioLleno)}</td>
+          <td class="n" style="color:#1a6b3c;font-weight:600">${fmt(c.precioDescuento)}</td>
+          <td class="n" style="color:#1a6b3c">${fmt(util)}</td>
+          <td class="n">${pct}%</td>
+        </tr>`;
+      });
+    });
+    if (svc.juntas && svc.juntas.hrs > 0) {
+      const c    = calcActivity(svc.juntas, params);
+      const util = c.precioDescuento - c.costoTotal;
+      const pct  = c.precioDescuento > 0 ? (util/c.precioDescuento*100).toFixed(1) : '0.0';
+      body += `<tr class="jrow"><td style="color:#1a3a8f">Juntas</td><td>${svc.juntas.desc||'Meetings'}</td><td>JUNTAS**</td><td class="n">${svc.juntas.hrs.toFixed(1)}</td><td class="n">${fmt(c.costoTotal)}</td><td class="n">${fmt(c.precioLleno)}</td><td class="n" style="color:#1a6b3c">${fmt(c.precioDescuento)}</td><td class="n" style="color:#1a6b3c">${fmt(util)}</td><td class="n">${pct}%</td></tr>`;
+    }
+    (svc.outsourcing||[]).forEach(o => {
+      const c    = calcActivity(o, params);
+      const util = c.precioDescuento - c.costoTotal;
+      const pct  = c.precioDescuento > 0 ? (util/c.precioDescuento*100).toFixed(1) : '0.0';
+      body += `<tr class="orow"><td style="color:#b45309">Proveedor</td><td>${o.desc||'Outsourcing'}</td><td>${Math.round((o.markup||.25)*100)}% mkp</td><td class="n">—</td><td class="n">${fmt(o.costo||0)}</td><td class="n">${fmt(c.precioLleno)}</td><td class="n" style="color:#1a6b3c">${fmt(c.precioDescuento)}</td><td class="n" style="color:#1a6b3c">${fmt(util)}</td><td class="n">${pct}%</td></tr>`;
+    });
+    body += `<tr class="sub"><td colspan="3">SUBTOTAL ${svc.name}</td><td class="n">${sc.hrs.toFixed(1)}</td><td class="n">${fmt(sc.costoTotal)}</td><td class="n">${fmt(sc.precioLleno)}</td><td class="n" style="color:#1a6b3c">${fmt(sc.precioDescuento)}</td><td class="n" style="color:#1a6b3c">${fmt(svcUtil)}</td><td class="n">${svcPct}%</td></tr>`;
+    body += `</tbody></table>`;
+  });
+
+  const totUtil = tot.precioFinal - tot.costoTotal;
+  const totPct  = tot.precioFinal > 0 ? (totUtil/tot.precioFinal*100).toFixed(1) : '0.0';
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <title>Agencia — ${cliente}</title>
+    <link href="https://api.fontshare.com/v2/css?f[]=monument-grotesk@400,500,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>${PDF_CSS} table{font-size:11px;} th,td{padding:5px 8px;}</style></head><body>
+    <h1>Cotización interna — Agencia</h1>
+    <div class="sub">ALG Agency · ${cliente} · ${proyecto} · ${fecha}</div>
+    ${body}
+    <div class="totbox">
+      <div class="trow" style="grid-template-columns:repeat(4,1fr)">
+        <div class="tcell"><label>Costo total ALG</label><span>${fmt(tot.costoTotal)}</span></div>
+        <div class="tcell"><label>Precio c/descuento</label><span>${fmt(tot.precioFinal)}</span></div>
+        <div class="tcell"><label>Utilidad bruta</label><span style="color:#4ade80">${fmt(totUtil)}</span></div>
+        <div class="tcell"><label>% Utilidad</label><span style="color:#4ade80">${totPct}%</span></div>
+      </div>
+      <div class="trow ivrow" style="grid-template-columns:repeat(3,1fr)">
+        <div class="tcell"><label>IVA 16%</label><span style="opacity:.7">${fmt(iva)}</span></div>
+        <div class="tcell big"><label>Total con IVA</label><span>${fmt(conIva)}</span></div>
+        <div class="tcell"><label>Pago mensual (${ppMonths} ${ppMonths===1?'pago':'meses'})</label><span style="color:#c8972a">${fmt(mes)}</span></div>
+      </div>
+    </div>
+    <div class="footer" style="color:#e8312a;font-weight:600">USO INTERNO — No compartir con el cliente.</div>
+  </body></html>`;
+  pdfOpen(html);
+}
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+document.getElementById('f-fecha').value = new Date().toISOString().split('T')[0];
+
+// Pre-load 5 default services
+['Brand Strategy','Brand Identity','Web','Estrategia Digital','Producción Audiovisual']
+  .forEach(name => addService(name));
+
+// Open first service
+if (services.length) {
+  services[0]._open = true;
+  renderServices();
+}
+refreshSidebar();
+// ══════════════════════════════════════════════════════
+// TEMPLATES
+// ══════════════════════════════════════════════════════
+const LS_KEY = 'alg_templates_v1';
+let _pendingSvcId = null;
+let _tmplFilter   = 'all';
+
+function getTemplates() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); }
+  catch { return []; }
+}
+function saveTemplates(arr) {
+  localStorage.setItem(LS_KEY, JSON.stringify(arr));
+}
+
+// ── Open modal to name & level the template ──────────────
+function saveServiceAsTemplate(svcId) {
+  const svc = services.find(s => s.id === svcId);
+  if (!svc) return;
+  _pendingSvcId = svcId;
+  document.getElementById('tmpl-name-input').value  = svc.name;
+  document.getElementById('tmpl-notes-input').value = '';
+  document.getElementById('tmpl-level-input').value = 'startup';
+  const modal = document.getElementById('tmpl-modal');
+  modal.style.display = 'flex';
+  setTimeout(() => document.getElementById('tmpl-name-input').focus(), 50);
+}
+
+function closeTemplateModal() {
+  document.getElementById('tmpl-modal').style.display = 'none';
+  _pendingSvcId = null;
+}
+
+// Close modal on backdrop click
+document.getElementById('tmpl-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('tmpl-modal')) closeTemplateModal();
+});
+
+function confirmSaveTemplate() {
+  if (_pendingSvcId === null) return;
+  const svc   = services.find(s => s.id === _pendingSvcId);
+  if (!svc) return;
+  const name  = document.getElementById('tmpl-name-input').value.trim() || svc.name;
+  const level = document.getElementById('tmpl-level-input').value;
+  const notes = document.getElementById('tmpl-notes-input').value.trim();
+
+  // Deep-clone the service, strip runtime IDs so it can be re-loaded cleanly
+  const snapshot = JSON.parse(JSON.stringify({
+    name:        name,
+    level:       level,
+    notes:       notes,
+    savedAt:     new Date().toISOString(),
+    serviceName: svc.name,
+    phases:      svc.phases.map(ph => ({
+      name: ph.name,
+      activities: ph.activities.map(a => ({
+        desc: a.desc, memberId: a.memberId, hrs: a.hrs
+      }))
+    })),
+    showJuntas:  svc.showJuntas,
+    juntas:      { desc: svc.juntas.desc, hrs: svc.juntas.hrs },
+    outsourcing: (svc.outsourcing||[]).map(o => ({
+      desc: o.desc, costo: o.costo, markup: o.markup
+    })),
+  }));
+
+  const templates = getTemplates();
+  templates.unshift(snapshot);
+  saveTemplates(templates);
+  closeTemplateModal();
+  renderTemplatesView();
+
+  // Brief toast
+  showToast(`Template "${name}" guardado ✓`);
+}
+
+// ── Load template into cotizador ─────────────────────────
+function loadTemplate(idx) {
+  const templates = getTemplates();
+  const t = templates[idx];
+  if (!t) return;
+
+  if (!confirm(`¿Agregar "${t.name}" (${levelLabel(t.level)}) a la cotización actual?`)) return;
+
+  // Create new service from template
+  const svcId = ++svcCounter;
+  const newSvc = {
+    id: svcId,
+    name: t.serviceName || t.name,
+    phases: [],
+    juntas: { type:'juntas', hrs: t.juntas?.hrs||0, desc: t.juntas?.desc||'Meetings / Project Overhead' },
+    outsourcing: [],
+    showJuntas: t.showJuntas || false,
+    _open: true,
+  };
+
+  t.phases.forEach(ph => {
+    const phId = ++phaseCounter;
+    const acts = (ph.activities||[]).map(a => ({
+      id: ++actCounter, desc: a.desc, memberId: a.memberId, hrs: a.hrs
+    }));
+    newSvc.phases.push({ id: phId, name: ph.name, activities: acts });
+  });
+
+  (t.outsourcing||[]).forEach(o => {
+    newSvc.outsourcing.push({ type:'outsourcing', id:++actCounter, desc:o.desc, costo:o.costo, markup:o.markup });
+  });
+
+  services.push(newSvc);
+  renderServices();
+  refreshSidebar();
+
+  // Switch to builder
+  document.querySelectorAll('header nav button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('header nav button')[0].classList.add('active');
+  document.getElementById('app-builder').style.display   = '';
+  document.getElementById('app-breakdown').style.display = 'none';
+  document.getElementById('app-templates').style.display = 'none';
+
+  // Scroll to new service
+  setTimeout(() => {
+    const el = document.getElementById(`svc-${svcId}`);
+    if (el) el.scrollIntoView({ behavior:'smooth', block:'center' });
+  }, 100);
+
+  showToast(`"${t.name}" añadido a la cotización ✓`);
+}
+
+function deleteTemplate(idx) {
+  const templates = getTemplates();
+  const t = templates[idx];
+  if (!t || !confirm(`¿Eliminar el template "${t.name}"?`)) return;
+  templates.splice(idx, 1);
+  saveTemplates(templates);
+  renderTemplatesView();
+}
+
+// ── Filter ───────────────────────────────────────────────
+function filterTemplates(level) {
+  _tmplFilter = level;
+  document.querySelectorAll('.tmpl-filter').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  renderTemplatesView();
+}
+
+// ── Render the templates grid ─────────────────────────────
+function levelLabel(level) {
+  return { startup:'🌱 Startup', mediana:'🏢 Mediana', enterprise:'🏛 Enterprise' }[level] || level;
+}
+function levelClass(level) {
+  return { startup:'level-startup', mediana:'level-mediana', enterprise:'level-enterprise' }[level] || '';
+}
+
+function renderTemplatesView() {
+  const all       = getTemplates();
+  const filtered  = _tmplFilter === 'all' ? all : all.filter(t => t.level === _tmplFilter);
+  const grid      = document.getElementById('tmpl-grid');
+  const empty     = document.getElementById('tmpl-empty');
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '';
+    grid.style.display = 'none';
+    empty.style.display = 'block';
+    empty.querySelector('div:last-child').textContent =
+      all.length === 0
+        ? 'Abre un servicio en el Constructor y haz clic en "💾 Guardar template"'
+        : 'No hay templates para este nivel. Prueba con otro filtro.';
+    return;
+  }
+
+  empty.style.display = 'none';
+  grid.style.display  = 'grid';
+  grid.className      = 'tmpl-grid';
+
+  // Map actual index in `all` array for delete/load
+  grid.innerHTML = filtered.map(t => {
+    const realIdx = all.indexOf(t);
+    const date    = t.savedAt ? new Date(t.savedAt).toLocaleDateString('es-MX') : '';
+    const phaseNames = (t.phases||[]).map(p =>
+      `<span class="tmpl-phase-tag">${p.name}</span>`
+    ).join('');
+    const totalHrs = (t.phases||[]).reduce((s,p) =>
+      s + (p.activities||[]).reduce((a,x) => a + (x.hrs||0), 0)
+    , 0) + (t.juntas?.hrs||0);
+    const extras = [
+      t.showJuntas && t.juntas?.hrs > 0 ? `⏱ Juntas: ${t.juntas.hrs} hrs` : '',
+      (t.outsourcing||[]).length > 0 ? `📦 ${t.outsourcing.length} proveedor(es)` : ''
+    ].filter(Boolean).join(' · ');
+
+    return `
+      <div class="tmpl-card">
+        <div class="tmpl-card-top">
+          <div class="tmpl-card-name">${t.name}</div>
+          <span class="tmpl-level-badge ${levelClass(t.level)}">${levelLabel(t.level)}</span>
+        </div>
+        ${t.notes ? `<div class="tmpl-notes">${t.notes}</div>` : ''}
+        <div class="tmpl-meta">${totalHrs.toFixed(1)} hrs estimadas · ${date}</div>
+        ${extras ? `<div class="tmpl-meta" style="color:var(--ink-soft)">${extras}</div>` : ''}
+        <div class="tmpl-phases">${phaseNames}</div>
+        <div class="tmpl-actions">
+          <button class="tmpl-btn-load" onclick="loadTemplate(${realIdx})">＋ Cargar en cotización</button>
+          <button class="tmpl-btn-del"  onclick="deleteTemplate(${realIdx})">🗑</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Export / Import JSON file ─────────────────────────────
+function exportTemplatesFile() {
+  const templates = getTemplates();
+  if (templates.length === 0) { showToast('No hay templates para exportar'); return; }
+  const blob = new Blob([JSON.stringify(templates, null, 2)], {type:'application/json'});
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = `ALG_templates_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importTemplatesFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!Array.isArray(imported)) throw new Error('Formato inválido');
+      const existing  = getTemplates();
+      const merged    = [...imported, ...existing];
+      // Deduplicate by name+savedAt
+      const seen = new Set();
+      const deduped = merged.filter(t => {
+        const key = t.name + '|' + t.savedAt;
+        if (seen.has(key)) return false;
+        seen.add(key); return true;
+      });
+      saveTemplates(deduped);
+      renderTemplatesView();
+      showToast(`${imported.length} template(s) importado(s) ✓`);
+    } catch {
+      showToast('Error al leer el archivo. ¿Es un JSON válido?');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// ── Toast notification ────────────────────────────────────
+function showToast(msg) {
+  let t = document.getElementById('alg-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'alg-toast';
+    t.style.cssText = `
+      position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+      background:#0f1117;color:#fff;padding:10px 20px;border-radius:30px;
+      font-family:'Monument Grotesk',sans-serif;font-size:.85rem;
+      opacity:0;transition:all .25s;z-index:9999;pointer-events:none;white-space:nowrap;
+    `;
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transform = 'translateX(-50%) translateY(20px)';
+  }, 2800);
+}
+
+</script>
+</body>
+</html>
