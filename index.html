@@ -524,6 +524,10 @@
           <label>Preparado por</label>
           <input type="text" id="f-prep" placeholder="Tu nombre" oninput="refreshSidebar()">
         </div>
+        <div class="field-group">
+          <label>Válido hasta</label>
+          <input type="date" id="f-validez" oninput="refreshSidebar()">
+        </div>
       </div>
     </div>
 
@@ -705,6 +709,22 @@
     </div>
   </div>
   <div id="breakdown-content"></div>
+</div>
+
+<!-- ── PDF CLIENTE MODAL ── -->
+<div id="pdf-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;padding:32px;width:440px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <h3 style="font-weight:700;font-size:1.05rem;margin-bottom:6px;font-family:var(--sans)">⬇ Generar PDF Cliente</h3>
+    <p style="font-size:.8rem;color:var(--ink-soft);margin-bottom:22px">Confirma o edita el número de cotización antes de generar el documento.</p>
+    <div class="field-group" style="margin-bottom:20px">
+      <label>Número de cotización</label>
+      <input type="text" id="pdf-cotnum" placeholder="Ej. ALG-2026-031" style="font-family:var(--mono);letter-spacing:.04em">
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button onclick="closePdfModal()" style="padding:9px 20px;border:1.5px solid var(--paper-3);border-radius:6px;background:transparent;cursor:pointer;font-family:var(--sans);font-size:.85rem">Cancelar</button>
+      <button onclick="confirmExportCliente()" style="padding:9px 22px;background:var(--ink);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:var(--sans);font-size:.85rem;font-weight:700">Generar PDF</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1330,6 +1350,8 @@ function renderBreakdown() {
 // ══════════════════════════════════════════════════════
 // EXPORTS — PDF CLIENTE y PDF AGENCIA
 // ══════════════════════════════════════════════════════
+
+// ── PDF AGENCIA (unchanged CSS) ──────────────────────
 const PDF_CSS = `
   body{font-family:'Monument Grotesk',sans-serif;color:#0f1117;padding:36px 44px;max-width:960px;margin:0 auto;font-size:12.5px;}
   h1{font-weight:700;font-size:1.7rem;margin-bottom:3px;}
@@ -1359,89 +1381,383 @@ const PDF_CSS = `
   @media print{body{padding:20px;}}
 `;
 
-function pdfOpen(html, title) {
+// ── CSS exclusivo del PDF cliente (nuevo diseño) ──────
+const PDF_CLIENTE_CSS = `
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cabinet Grotesk',sans-serif;background:#fff;color:#0c0d0f;font-size:13px;}
+  .page{max-width:860px;margin:0 auto;border:1px solid #e8e8e8;}
+
+  /* fonts fallback */
+  .display{font-family:'Clash Display','Monument Grotesk',sans-serif;}
+  .mono{font-family:'DM Mono',monospace;}
+
+  /* header */
+  .doc-header{display:grid;grid-template-columns:1fr 1fr;border-bottom:1.5px solid #0c0d0f;}
+  .header-left{padding:36px 40px 30px;border-right:1.5px solid #0c0d0f;}
+  .logo-mark{font-family:'Monument Grotesk',sans-serif;font-weight:700;font-size:1.3rem;letter-spacing:-.01em;margin-bottom:24px;display:flex;align-items:center;gap:8px;}
+  .logo-dot{width:7px;height:7px;border-radius:50%;background:#c8972a;display:inline-block;}
+  .doc-type{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#9499aa;margin-bottom:6px;}
+  .doc-title{font-family:'Monument Grotesk',sans-serif;font-weight:700;font-size:2rem;letter-spacing:-.03em;line-height:1.0;}
+  .header-right{padding:36px 40px 30px;}
+  .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 12px;}
+  .meta-item label{font-family:'DM Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:.12em;color:#9499aa;display:block;margin-bottom:3px;}
+  .meta-item span{font-size:12px;font-weight:700;}
+
+  /* intro strip */
+  .intro-strip{background:#0c0d0f;padding:14px 40px;display:flex;align-items:center;justify-content:space-between;gap:20px;}
+  .intro-text{font-size:10px;color:rgba(255,255,255,.5);line-height:1.55;max-width:500px;}
+  .intro-ref{font-family:'DM Mono',monospace;font-size:10px;color:#c8972a;white-space:nowrap;flex-shrink:0;}
+
+  /* section label */
+  .section-label{font-family:'DM Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:.14em;color:#9499aa;padding:18px 40px 8px;border-bottom:1px solid #e8e8e8;display:flex;align-items:center;gap:10px;}
+  .section-label::before{content:'';width:14px;height:1px;background:#9499aa;display:inline-block;}
+
+  /* service block */
+  .service-block{border-bottom:1.5px solid #0c0d0f;}
+  .service-title-row{display:flex;align-items:baseline;justify-content:space-between;padding:16px 40px 12px;border-bottom:1px solid #e8e8e8;}
+  .service-name{font-family:'Monument Grotesk',sans-serif;font-weight:700;font-size:13px;letter-spacing:-.01em;}
+  .service-total-price{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;}
+
+  /* activity rows */
+  .act-cols-header{display:grid;grid-template-columns:150px 1fr;padding:5px 40px;border-bottom:1px solid #e8e8e8;background:#f7f7f5;}
+  .col-hdr{font-family:'DM Mono',monospace;font-size:7.5px;text-transform:uppercase;letter-spacing:.1em;color:#9499aa;}
+  .act-row{display:grid;grid-template-columns:150px 1fr;padding:8px 40px;border-bottom:1px solid #f2f2f0;align-items:start;}
+  .act-row:last-child{border-bottom:none;}
+  .act-phase-label{font-family:'DM Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:.07em;color:#9499aa;padding-top:2px;}
+  .act-desc{font-size:12px;color:#0c0d0f;line-height:1.4;padding-right:16px;}
+  .act-row.juntas-row{background:#f7f8ff;}
+  .act-row.juntas-row .act-desc{color:#2e3d90;font-style:italic;}
+  .act-row.juntas-row .act-phase-label{color:#2e3d90;}
+  .act-row.outsrc-row{background:#fffbf5;}
+  .act-row.outsrc-row .act-desc{color:#8a4800;font-style:italic;}
+  .act-row.outsrc-row .act-phase-label{color:#8a4800;}
+
+  /* subtotal */
+  .service-subtotal{display:flex;justify-content:flex-end;align-items:baseline;gap:16px;padding:10px 40px;background:#f7f7f5;border-top:1px solid #e8e8e8;}
+  .sst-label{font-family:'DM Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#9499aa;}
+  .sst-price{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;}
+
+  /* totals */
+  .totals-section{border-bottom:1.5px solid #0c0d0f;}
+  .totals-grid{display:grid;grid-template-columns:1fr 1fr 1fr;}
+  .total-cell{padding:22px 32px;border-right:1px solid #e8e8e8;}
+  .total-cell:last-child{border-right:none;}
+  .total-cell label{font-family:'DM Mono',monospace;font-size:7.5px;text-transform:uppercase;letter-spacing:.12em;color:#9499aa;display:block;margin-bottom:6px;}
+  .total-cell .amount{font-family:'Monument Grotesk',sans-serif;font-weight:700;font-size:1.5rem;letter-spacing:-.03em;line-height:1;}
+  .total-cell .amount.gold{color:#c8972a;}
+  .total-cell .sub-note{font-family:'DM Mono',monospace;font-size:8.5px;color:#9499aa;margin-top:4px;}
+
+  /* payment */
+  .payment-section{display:grid;grid-template-columns:1fr 1fr;border-bottom:1.5px solid #0c0d0f;}
+  .payment-left{padding:22px 40px;border-right:1.5px solid #0c0d0f;}
+  .payment-right{padding:22px 40px;}
+  .pp-section-title{font-family:'DM Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:.14em;color:#9499aa;margin-bottom:12px;}
+  .pp-row{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid #f2f2f0;}
+  .pp-row:last-child{border-bottom:none;}
+  .pp-row .k{font-size:11px;color:#4a4d58;}
+  .pp-row .v{font-family:'DM Mono',monospace;font-size:11px;}
+  .pp-row.hl .k{font-weight:700;color:#0c0d0f;}
+  .pp-row.hl .v{font-size:13px;font-weight:500;color:#c8972a;}
+  .sched-item{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+  .sched-num{font-family:'DM Mono',monospace;font-size:8px;color:#9499aa;width:14px;text-align:right;flex-shrink:0;}
+  .sched-bar-wrap{flex:1;height:3px;background:#e8e8e8;border-radius:2px;overflow:hidden;}
+  .sched-bar{height:100%;background:#0c0d0f;border-radius:2px;}
+  .sched-amount{font-family:'DM Mono',monospace;font-size:9px;color:#4a4d58;white-space:nowrap;width:80px;text-align:right;}
+  .sched-date{font-family:'DM Mono',monospace;font-size:9px;color:#9499aa;white-space:nowrap;width:70px;}
+
+  /* banking */
+  .banking-section{display:grid;grid-template-columns:1fr 1fr;border-bottom:1.5px solid #0c0d0f;}
+  .banking-left{padding:22px 40px;border-right:1.5px solid #0c0d0f;}
+  .banking-right{padding:22px 40px;}
+  .bank-title{font-family:'DM Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:.14em;color:#9499aa;margin-bottom:12px;}
+  .bank-row{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid #f2f2f0;}
+  .bank-row:last-child{border-bottom:none;}
+  .bank-row .k{font-size:11px;color:#9499aa;}
+  .bank-row .v{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;text-align:right;}
+  .clabe-box{background:#f7f7f5;border:1px solid #e8e8e8;border-radius:4px;padding:8px 12px;margin-top:12px;}
+  .clabe-label{font-family:'DM Mono',monospace;font-size:7px;text-transform:uppercase;letter-spacing:.1em;color:#9499aa;margin-bottom:2px;}
+  .clabe-num{font-family:'DM Mono',monospace;font-size:14px;letter-spacing:.06em;font-weight:500;}
+  .legal-note{font-size:10px;color:#9499aa;line-height:1.55;}
+  .concept-box{margin-top:14px;padding:10px 14px;background:#f7f7f5;border-radius:4px;border-left:3px solid #0c0d0f;}
+  .concept-label{font-family:'DM Mono',monospace;font-size:7px;text-transform:uppercase;letter-spacing:.1em;color:#9499aa;margin-bottom:4px;}
+  .concept-text{font-size:11px;line-height:1.4;}
+
+  /* footer */
+  .doc-footer{display:grid;grid-template-columns:1fr auto;align-items:end;padding:20px 40px;gap:20px;}
+  .footer-note{font-size:10px;color:#9499aa;line-height:1.5;max-width:440px;}
+  .footer-brand{font-family:'Monument Grotesk',sans-serif;font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px;}
+
+  @media print{body{background:#fff;} .page{border:none;}}
+`;
+
+function pdfOpen(html) {
   const w = window.open('', '_blank');
   w.document.write(html);
   w.document.close();
   w.onload = () => w.print();
 }
 
+// ── Modal: pide número de cotización antes de generar ──
 function exportCliente() {
-  const params  = getParams();
-  const tot     = calcTotal(params);
-  const cliente = document.getElementById('f-cliente').value || 'Cliente';
-  const proyecto= document.getElementById('f-proyecto').value || 'Proyecto';
-  const fecha   = document.getElementById('f-fecha').value || new Date().toLocaleDateString('es-MX');
-  const dcto    = document.getElementById('p-dcto').value;
-  const iva     = tot.precioFinal * 0.16;
-  const conIva  = tot.precioFinal + iva;
-  const mes     = ppMonths > 0 ? tot.precioFinal / ppMonths : tot.precioFinal;
-  const mesIva  = mes * 1.16;
+  const now   = new Date();
+  const yy    = now.getFullYear();
+  const mm    = String(now.getMonth() + 1).padStart(2, '0');
+  // auto-sugerido basado en fecha actual
+  const sugerido = `ALG-${yy}-${mm}`;
+  document.getElementById('pdf-cotnum').value = sugerido;
+  const modal = document.getElementById('pdf-modal');
+  modal.style.display = 'flex';
+  setTimeout(() => document.getElementById('pdf-cotnum').select(), 60);
+}
 
-  let body = '';
-  services.forEach(svc => {
-    const sc = calcService(svc, params);
-    const svcMes = ppMonths > 0 ? sc.precioDescuento / ppMonths : sc.precioDescuento;
-    body += `<div class="svc">${svc.name}</div>
-    <table><thead><tr>
-      <th>Fase</th><th>Actividad / Entregable</th>
-      <th class="r">Precio s/Dcto</th><th class="r">Precio c/Dcto</th><th class="r">Pago / mes</th>
-    </tr></thead><tbody>`;
-    svc.phases.forEach(ph => {
-      ph.activities.forEach((act, i) => {
-        const c = calcActivity(act, params);
-        const ap = ppMonths > 0 ? c.precioDescuento / ppMonths : c.precioDescuento;
-        body += `<tr>
-          <td style="color:#2e5090;font-weight:600;white-space:nowrap">${i===0?ph.name:''}</td>
-          <td>${act.desc||'—'}</td>
-          <td class="n">${fmt(c.precioLleno)}</td>
-          <td class="n" style="color:#1a6b3c;font-weight:600">${fmt(c.precioDescuento)}</td>
-          <td class="n" style="color:#c8972a">${fmt(ap)}</td>
-        </tr>`;
-      });
-    });
-    if (svc.juntas && svc.juntas.hrs > 0) {
-      const c = calcActivity(svc.juntas, params);
-      const jp = ppMonths > 0 ? c.precioDescuento / ppMonths : c.precioDescuento;
-      body += `<tr class="jrow"><td style="color:#1a3a8f">Juntas</td><td>${svc.juntas.desc||'Meetings'}</td><td class="n">${fmt(c.precioLleno)}</td><td class="n" style="color:#1a6b3c">${fmt(c.precioDescuento)}</td><td class="n" style="color:#c8972a">${fmt(jp)}</td></tr>`;
-    }
-    (svc.outsourcing||[]).forEach(o => {
-      const c = calcActivity(o, params);
-      const op = ppMonths > 0 ? c.precioDescuento / ppMonths : c.precioDescuento;
-      body += `<tr class="orow"><td style="color:#b45309">Proveedor</td><td>${o.desc||'Outsourcing'}</td><td class="n">${fmt(c.precioLleno)}</td><td class="n" style="color:#1a6b3c">${fmt(c.precioDescuento)}</td><td class="n" style="color:#c8972a">${fmt(op)}</td></tr>`;
-    });
-    body += `<tr class="sub"><td colspan="2">SUBTOTAL ${svc.name}</td><td class="n">${fmt(sc.precioLleno)}</td><td class="n" style="color:#1a6b3c">${fmt(sc.precioDescuento)}</td><td class="n" style="color:#c8972a">${fmt(svcMes)}</td></tr>`;
-    body += `</tbody></table>`;
+function closePdfModal() {
+  document.getElementById('pdf-modal').style.display = 'none';
+}
+
+document.getElementById('pdf-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('pdf-modal')) closePdfModal();
+});
+
+function confirmExportCliente() {
+  const cotNum = document.getElementById('pdf-cotnum').value.trim() || 'ALG-S/N';
+  closePdfModal();
+  _doExportCliente(cotNum);
+}
+
+// ── Genera el PDF cliente con el nuevo diseño ──────────
+function _doExportCliente(cotNum) {
+  const params   = getParams();
+  const tot      = calcTotal(params);
+  const cliente  = document.getElementById('f-cliente').value  || 'Cliente';
+  const proyecto = document.getElementById('f-proyecto').value || 'Proyecto';
+  const prep     = document.getElementById('f-prep').value     || '';
+  const rawFecha = document.getElementById('f-fecha').value;
+  const rawValid = document.getElementById('f-validez').value;
+
+  const fmtDate = iso => {
+    if (!iso) return '—';
+    const [y,m,d] = iso.split('-');
+    const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    return `${parseInt(d)} ${meses[parseInt(m)-1]} ${y}`;
+  };
+
+  const iva      = tot.precioFinal * 0.16;
+  const conIva   = tot.precioFinal + iva;
+  const mes      = ppMonths > 0 ? tot.precioFinal / ppMonths : tot.precioFinal;
+  const mesIva   = mes * 1.16;
+
+  // Descuento pago único (5%)
+  const DISC_UNICO = 0.05;
+  const pagoUnico  = conIva * (1 - DISC_UNICO);
+
+  // Fechas de pago (aprox: hoy + n*30 días)
+  const today = rawFecha ? new Date(rawFecha + 'T12:00:00') : new Date();
+  const schedDates = Array.from({length: ppMonths}, (_, i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() + i * 30);
+    return fmtDate(d.toISOString().slice(0,10));
   });
 
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-    <title>Cotización — ${cliente}</title>
-    <link href="https://api.fontshare.com/v2/css?f[]=monument-grotesk@400,500,700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <style>${PDF_CSS}</style></head><body>
-    <h1>Cotización de servicios</h1>
-    <div class="sub">ALG Agency</div>
-    <div class="meta">
-      <div><label>Cliente</label><span>${cliente}</span></div>
-      <div><label>Proyecto</label><span>${proyecto}</span></div>
-      <div><label>Fecha</label><span>${fecha}</span></div>
-      <div><label>Descuento</label><span>${dcto}%</span></div>
+  // ── Construir bloques de servicios ──
+  let serviciosHTML = '';
+  services.forEach((svc, sIdx) => {
+    const sc = calcService(svc, params);
+
+    let rowsHTML = '';
+    svc.phases.forEach(ph => {
+      ph.activities.forEach((act, i) => {
+        rowsHTML += `
+          <div class="act-row">
+            <div class="act-phase-label">${i === 0 ? ph.name : ''}</div>
+            <div class="act-desc">${act.desc || '—'}</div>
+          </div>`;
+      });
+    });
+
+    if (svc.juntas && svc.juntas.hrs > 0) {
+      rowsHTML += `
+        <div class="act-row juntas-row">
+          <div class="act-phase-label">Coordinación</div>
+          <div class="act-desc">${svc.juntas.desc || 'Meetings / Project Overhead'}</div>
+        </div>`;
+    }
+
+    (svc.outsourcing || []).forEach(o => {
+      rowsHTML += `
+        <div class="act-row outsrc-row">
+          <div class="act-phase-label">Proveedor</div>
+          <div class="act-desc">${o.desc || 'Outsourcing'}</div>
+        </div>`;
+    });
+
+    serviciosHTML += `
+      <div class="service-block">
+        <div class="service-title-row">
+          <div class="service-name">${String(sIdx + 1).padStart(2,'0')} · ${svc.name}</div>
+          <div class="service-total-price">${fmt(sc.precioDescuento)}</div>
+        </div>
+        <div class="act-cols-header">
+          <span class="col-hdr">Fase</span>
+          <span class="col-hdr">Actividad / Entregable</span>
+        </div>
+        ${rowsHTML}
+        <div class="service-subtotal">
+          <span class="sst-label">Subtotal</span>
+          <span class="sst-price">${fmt(sc.precioDescuento)}</span>
+        </div>
+      </div>`;
+  });
+
+  // ── Calendario de pagos ──
+  const schedHTML = schedDates.map((date, i) => `
+    <div class="sched-item">
+      <div class="sched-num">${i + 1}</div>
+      <div class="sched-bar-wrap"><div class="sched-bar" style="width:100%"></div></div>
+      <div class="sched-amount">${fmt(mesIva)}</div>
+      <div class="sched-date">${i === 0 ? 'Al firmar' : date}</div>
+    </div>`).join('');
+
+  // ── Lista de servicios en panel de pagos ──
+  const svcListHTML = services.map((svc, i) => `
+    <div style="display:flex;align-items:center;gap:8px;font-size:10px;color:#4a4d58;margin-bottom:4px;">
+      <span style="font-family:'DM Mono',monospace;font-size:7px;color:#9499aa;">${String(i+1).padStart(2,'0')}</span>
+      ${svc.name}
+    </div>`).join('');
+
+  // ── HTML final ──
+  const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Cotización ${cotNum} — ${cliente}</title>
+<link href="https://api.fontshare.com/v2/css?f[]=monument-grotesk@400,500,700&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>${PDF_CLIENTE_CSS}</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="doc-header">
+    <div class="header-left">
+      <div class="logo-mark"><span class="logo-dot"></span> ALG Digital</div>
+      <div class="doc-type">Propuesta de servicios</div>
+      <div class="doc-title">Cotización<br>de Servicios</div>
     </div>
-    ${body}
-    <div class="totbox">
-      <div class="trow" style="grid-template-columns:repeat(3,1fr)">
-        <div class="tcell"><label>Precio s/descuento</label><span>${fmt(tot.precioLleno)}</span></div>
-        <div class="tcell"><label>Precio c/descuento</label><span>${fmt(tot.precioFinal)}</span></div>
-        <div class="tcell"><label>Pago mensual (${ppMonths} ${ppMonths===1?'pago':'meses'})</label><span style="color:#c8972a">${fmt(mes)}</span></div>
-      </div>
-      <div class="trow ivrow" style="grid-template-columns:repeat(3,1fr)">
-        <div class="tcell"><label>IVA 16%</label><span style="opacity:.7">${fmt(iva)}</span></div>
-        <div class="tcell big"><label>Total con IVA</label><span>${fmt(conIva)}</span></div>
-        <div class="tcell"><label>Pago mensual + IVA</label><span style="color:#c8972a">${fmt(mesIva)}</span></div>
+    <div class="header-right">
+      <div class="meta-grid">
+        <div class="meta-item"><label>Cliente</label><span>${cliente}</span></div>
+        <div class="meta-item"><label>Proyecto</label><span>${proyecto}</span></div>
+        <div class="meta-item"><label>Fecha</label><span>${fmtDate(rawFecha)}</span></div>
+        <div class="meta-item"><label>Preparado por</label><span>${prep || '—'}</span></div>
+        <div class="meta-item"><label>Válido hasta</label><span>${fmtDate(rawValid)}</span></div>
+        <div class="meta-item"><label>No. Cotización</label><span style="font-family:'DM Mono',monospace;font-weight:400;font-size:11px">${cotNum}</span></div>
       </div>
     </div>
-    <div class="footer">Esta cotización es referencial y puede estar sujeta a cambios tras revisión de entregables con el cliente.</div>
-  </body></html>`;
+  </div>
+
+  <div class="intro-strip">
+    <div class="intro-text">
+      Esta propuesta presenta el desglose de servicios acordados para ${cliente}. Los precios están expresados en MXN. El total con IVA aparece al final del documento.
+    </div>
+    <div class="intro-ref">${proyecto}</div>
+  </div>
+
+  <div class="section-label">Desglose de servicios</div>
+
+  ${serviciosHTML}
+
+  <div class="section-label">Resumen financiero</div>
+
+  <div class="totals-section">
+    <div class="totals-grid">
+      <div class="total-cell">
+        <label>Total servicios (s/IVA)</label>
+        <div class="amount">${fmt(tot.precioFinal)}</div>
+        <div class="sub-note">Descuento aplicado</div>
+      </div>
+      <div class="total-cell">
+        <label>IVA 16%</label>
+        <div class="amount" style="font-size:1.1rem;color:#4a4d58">${fmt(iva)}</div>
+        <div class="sub-note">Desglosado en factura</div>
+      </div>
+      <div class="total-cell">
+        <label>Total con IVA</label>
+        <div class="amount gold">${fmt(conIva)}</div>
+        <div class="sub-note">Precio final de la propuesta</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">Plan de pagos</div>
+
+  <div class="payment-section">
+    <div class="payment-left">
+      <div class="pp-section-title">Esquema — ${ppMonths} ${ppMonths === 1 ? 'pago' : 'parcialidades'}</div>
+      <div class="pp-row"><span class="k">No. de pagos</span><span class="v">${ppMonths}</span></div>
+      <div class="pp-row"><span class="k">Monto por pago (s/IVA)</span><span class="v">${fmt(mes)}</span></div>
+      <div class="pp-row"><span class="k">IVA por pago</span><span class="v">${fmt(mes * 0.16)}</span></div>
+      <div class="pp-row hl"><span class="k">Monto por pago (c/IVA)</span><span class="v">${fmt(mesIva)}</span></div>
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid #e8e8e8;">
+        <div class="pp-section-title" style="margin-bottom:6px">Pago único — descuento adicional 5%</div>
+        <div style="font-size:10px;color:#9499aa;line-height:1.5;">
+          Liquidación en un solo pago: <strong style="color:#0c0d0f">${fmt(pagoUnico)}</strong> (c/IVA)
+        </div>
+      </div>
+    </div>
+    <div class="payment-right">
+      <div class="pp-section-title">Calendario tentativo</div>
+      ${schedHTML}
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid #e8e8e8;">
+        <div class="pp-section-title" style="margin-bottom:6px">Servicios incluidos</div>
+        ${svcListHTML}
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">Datos bancarios</div>
+
+  <div class="banking-section">
+    <div class="banking-left">
+      <div class="bank-title">Transferencia bancaria</div>
+      <div class="bank-row"><span class="k">Banco</span><span class="v">BBVA Bancomer</span></div>
+      <div class="bank-row"><span class="k">Titular</span><span class="v">ALG Digital S. de R.L. de C.V.</span></div>
+      <div class="bank-row"><span class="k">No. de cuenta</span><span class="v">0110598291</span></div>
+      <div class="clabe-box">
+        <div class="clabe-label">CLABE interbancaria</div>
+        <div class="clabe-num">012580001105982912</div>
+      </div>
+    </div>
+    <div class="banking-right">
+      <div class="bank-title">Instrucciones</div>
+      <div class="legal-note">
+        Favor de incluir en la referencia de la transferencia el número de cotización <strong style="color:#0c0d0f">${cotNum}</strong> y el nombre del cliente para identificar correctamente el pago.
+      </div>
+      <div class="legal-note" style="margin-top:8px">
+        La factura se emitirá dentro de los 3 días hábiles posteriores a la confirmación del depósito.
+      </div>
+      <div class="concept-box">
+        <div class="concept-label">Concepto de factura</div>
+        <div class="concept-text">Servicios de consultoría de marca, diseño y desarrollo digital — ${cotNum}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    <div class="footer-note">
+      Esta propuesta es confidencial y está dirigida exclusivamente a ${cliente}. Los precios están sujetos a confirmación de alcance definitivo. Válida por 30 días naturales a partir de la fecha de emisión.
+    </div>
+    <div class="footer-brand">
+      <span class="logo-dot" style="width:7px;height:7px;border-radius:50%;background:#c8972a;display:inline-block"></span>
+      ALG Digital
+    </div>
+  </div>
+
+</div>
+</body>
+</html>`;
+
   pdfOpen(html);
 }
 
@@ -1535,6 +1851,8 @@ function exportAgencia() {
 // INIT
 // ══════════════════════════════════════════════════════
 document.getElementById('f-fecha').value = new Date().toISOString().split('T')[0];
+const _validez = new Date(); _validez.setDate(_validez.getDate() + 30);
+document.getElementById('f-validez').value = _validez.toISOString().split('T')[0];
 
 // Pre-load 5 default services
 ['Brand Strategy','Brand Identity','Web','Estrategia Digital','Producción Audiovisual']
