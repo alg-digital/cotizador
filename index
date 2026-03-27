@@ -639,6 +639,10 @@
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
       <button class="btn-export" onclick="exportCliente()">⬇ PDF Cliente</button>
       <button class="btn-export" onclick="exportAgencia()" style="background:var(--gold);color:var(--ink)">⬇ PDF Agencia (interno)</button>
+      <div style="height:1px;background:rgba(255,255,255,.12);margin:4px 0"></div>
+      <button class="btn-export" onclick="exportDashboardJSON()" style="background:#1a6b3c;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px">
+        ✅ Aprobar → Exportar al Dashboard
+      </button>
     </div>
   </aside>
 </div>
@@ -2109,6 +2113,124 @@ function importTemplatesFile(event) {
     event.target.value = '';
   };
   reader.readAsText(file);
+}
+
+
+// ══════════════════════════════════════════════════════
+// EXPORT → DASHBOARD JSON
+// ══════════════════════════════════════════════════════
+function exportDashboardJSON() {
+  if (!services.length) { showToast('Agrega al menos un servicio antes de exportar'); return; }
+
+  const params   = getParams();
+  const cliente  = document.getElementById('f-cliente').value.trim() || 'Sin cliente';
+  const proyecto = document.getElementById('f-proyecto').value.trim() || 'Sin nombre';
+  const fecha    = document.getElementById('f-fecha').value || new Date().toISOString().split('T')[0];
+  const prep     = document.getElementById('f-prep').value.trim();
+
+  // Build per-collaborator hour + cost map across all services
+  // We'll export each SERVICE as a separate "servicio" block
+  const servicios = services.map(svc => {
+    const sc = calcService(svc, params);
+
+    // Aggregate hours + costoAlg per team member within this service
+    const memberMap = {};
+
+    svc.phases.forEach(ph => {
+      ph.activities.forEach(act => {
+        const member = TEAM.find(t => t.id === act.memberId);
+        const name   = member ? member.name : 'Desconocido';
+        const c      = calcActivity(act, params);
+        if (!memberMap[name]) memberMap[name] = { name, hrs: 0, costoAlg: 0, precioLleno: 0, actividades: [] };
+        memberMap[name].hrs       += act.hrs || 0;
+        memberMap[name].costoAlg  += c.costoTotal;
+        memberMap[name].precioLleno += c.precioLleno;
+        memberMap[name].actividades.push({
+          desc:        act.desc || '',
+          hrs:         act.hrs  || 0,
+          tipo:        'produccion',
+          costoAlg:    c.costoTotal,
+          precioLleno: c.precioLleno,
+        });
+      });
+    });
+
+    // Juntas — distribute under JUNTAS** member
+    if (svc.juntas && svc.juntas.hrs > 0) {
+      const c    = calcActivity(svc.juntas, params);
+      const name = 'JUNTAS**';
+      if (!memberMap[name]) memberMap[name] = { name, hrs: 0, costoAlg: 0, precioLleno: 0, actividades: [] };
+      memberMap[name].hrs        += svc.juntas.hrs;
+      memberMap[name].costoAlg   += c.costoTotal;
+      memberMap[name].precioLleno+= c.precioLleno;
+      memberMap[name].actividades.push({
+        desc:        svc.juntas.desc || 'Meetings / Project Overhead',
+        hrs:         svc.juntas.hrs,
+        tipo:        'junta',
+        costoAlg:    c.costoTotal,
+        precioLleno: c.precioLleno,
+      });
+    }
+
+    // Outsourcing
+    const outsourcing = (svc.outsourcing || []).map(o => {
+      const c = calcActivity(o, params);
+      return {
+        desc:        o.desc || 'Outsourcing',
+        costo:       o.costo || 0,
+        markup:      Math.round((o.markup || 0.25) * 100),
+        costoTotal:  c.costoTotal,
+        precioLleno: c.precioLleno,
+      };
+    });
+
+    return {
+      nombre:       svc.name,
+      hrsTotal:     sc.hrs,
+      costoAlg:     sc.costoTotal,
+      precioLleno:  sc.precioLleno,   // ← ingreso potencial máximo (sin descuento)
+      colaboradores: Object.values(memberMap),
+      outsourcing,
+    };
+  });
+
+  // Global totals
+  const tot = calcTotal(params);
+
+  const payload = {
+    _version:    'alg-cotizador-v1',
+    _exportedAt: new Date().toISOString(),
+    meta: {
+      cliente,
+      proyecto,
+      fecha,
+      preparadoPor: prep,
+    },
+    params: {
+      overhead:   params.overhead,
+      utilidad:   params.util,
+      descuento:  params.dcto,
+      descuento2: params.dcto2,
+    },
+    totales: {
+      hrs:          tot.hrs,
+      costoAlg:     tot.costoTotal,
+      precioLleno:  tot.precioLleno,    // ingreso potencial (sin descuento)
+      precioFinal:  tot.precioFinal,    // ingreso con descuentos aplicados
+      utilidad:     tot.utilidad,
+      pctUtilidad:  +(tot.pctUtil * 100).toFixed(1),
+    },
+    servicios,
+  };
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = `ALG_Cotizacion_${cliente.replace(/\s+/g,'_')}_${fecha}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+
+  showToast(`Cotización "${proyecto}" exportada ✓`);
 }
 
 // ── Toast notification ────────────────────────────────────
