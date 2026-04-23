@@ -2756,8 +2756,6 @@ function loadFromHistorial(id) {
   if (entry.params) {
     document.getElementById('p-overhead').value = entry.params.overhead ?? 1.2;
     document.getElementById('p-util').value     = entry.params.util     ?? 0.5;
-    document.getElementById('p-dcto').value     = Math.round((entry.params.dcto  ?? 0.1) * 100);
-    document.getElementById('p-dcto2').value    = Math.round((entry.params.dcto2 ?? 0)   * 100);
   }
   ppMonths = entry.ppMonths || 1;
   document.querySelectorAll('.pp-btn').forEach(b => b.classList.remove('active'));
@@ -2861,8 +2859,6 @@ function loadSnapshotForPDF(entry) {
   if (entry.params) {
     document.getElementById('p-overhead').value = entry.params.overhead ?? 1.2;
     document.getElementById('p-util').value     = entry.params.util     ?? 0.5;
-    document.getElementById('p-dcto').value     = Math.round((entry.params.dcto  ?? 0.1) * 100);
-    document.getElementById('p-dcto2').value    = Math.round((entry.params.dcto2 ?? 0)   * 100);
   }
   ppMonths = entry.ppMonths || 1;
 
@@ -2951,7 +2947,6 @@ function renderHistorial() {
         ${entry.notes ? `<div class="hist-notes">${entry.notes}</div>` : ''}
         <div class="hist-actions">
           <button class="hist-btn hist-btn-load" onclick="loadFromHistorial(${entry.id})">⬆ Cargar en constructor</button>
-          <button class="hist-btn hist-btn-pdfc" onclick="histPDFCliente(${entry.id})">⬇ PDF Cliente</button>
           <button class="hist-btn hist-btn-pdfa" onclick="histPDFAgencia(${entry.id})">⬇ PDF Agencia</button>
           <select class="hist-status-select" onchange="updateHistorialStatus(${entry.id}, this.value)" title="Cambiar estado">
             ${statusOpts}
