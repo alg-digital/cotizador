@@ -3554,10 +3554,17 @@ function buildEquipoTab() {
 }
 
 function updateTeamField(idx, field, value) {
-  if (field === 'sueldo') TEAM[idx].sueldo = parseFloat(value) || 0;
-  if (field === 'name')   TEAM[idx].name   = value;
-  // Update rate hint live
-  renderSettingsTab('equipo');
+  if (field === 'sueldo') {
+    TEAM[idx].sueldo = parseFloat(value) || 0;
+    // Only update the rate hint for this row, no full re-render
+    const FACTOR = 1/20/6;
+    const hint = document.querySelector(`#team-rows .team-row[data-idx="${idx}"] ~ div .team-rate-hint`);
+    if (hint) hint.textContent = '$' + (TEAM[idx].sueldo * FACTOR).toFixed(2) + '/hr';
+  }
+  if (field === 'name') {
+    TEAM[idx].name = value;
+    // No re-render needed — the input already shows the typed value
+  }
 }
 
 function deleteTeamMember(idx) {
