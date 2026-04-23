@@ -595,6 +595,137 @@
   .hist-filter-btn:hover { border-color:var(--accent); color:var(--accent); }
   .hist-filter-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
 
+
+  /* ── SETTINGS MODAL ── */
+  .settings-overlay {
+    position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;
+    display:none;align-items:center;justify-content:center;
+  }
+  .settings-overlay.open { display:flex; }
+  .settings-panel {
+    background:#fff;border-radius:14px;width:680px;max-width:94vw;
+    max-height:88vh;display:flex;flex-direction:column;
+    box-shadow:0 24px 80px rgba(0,0,0,.28);overflow:hidden;
+  }
+  .settings-header {
+    display:flex;align-items:center;justify-content:space-between;
+    padding:20px 28px 0;border-bottom:1px solid var(--paper-2);
+    flex-shrink:0;
+  }
+  .settings-title { font-weight:700;font-size:1.05rem; }
+  .settings-close {
+    background:none;border:none;font-size:1.2rem;cursor:pointer;
+    color:var(--ink-soft);padding:4px 8px;border-radius:4px;
+    transition:all .15s;
+  }
+  .settings-close:hover { background:var(--red-bg);color:var(--accent-2); }
+  .settings-tabs {
+    display:flex;gap:0;padding:0 28px;border-bottom:1px solid var(--paper-2);
+    flex-shrink:0;
+  }
+  .settings-tab {
+    padding:12px 18px;font-size:.82rem;font-weight:600;cursor:pointer;
+    border:none;background:none;font-family:var(--sans);color:var(--ink-soft);
+    border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;
+  }
+  .settings-tab:hover { color:var(--ink); }
+  .settings-tab.active { color:var(--accent);border-bottom-color:var(--accent); }
+  .settings-body { overflow-y:auto;padding:24px 28px;flex:1; }
+  .settings-section-title {
+    font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--ink-soft);margin-bottom:14px;
+  }
+
+  /* Team editor */
+  .team-table { width:100%;border-collapse:collapse; }
+  .team-row {
+    display:grid;grid-template-columns:28px 1fr 130px 36px;
+    gap:0;border-bottom:1px solid var(--paper-2);align-items:center;
+    transition:background .1s;
+  }
+  .team-row:hover { background:var(--paper); }
+  .team-row.dragging { opacity:.4; }
+  .team-row.drag-over { border-top:2px solid var(--accent); }
+  .drag-handle {
+    cursor:grab;color:var(--paper-3);font-size:.9rem;
+    padding:8px 4px 8px 8px;text-align:center;user-select:none;
+  }
+  .drag-handle:hover { color:var(--ink-soft); }
+  .team-name-input, .team-sueldo-input {
+    border:none;background:transparent;font-family:var(--sans);
+    font-size:.85rem;color:var(--ink);padding:9px 10px;width:100%;
+  }
+  .team-sueldo-input { font-family:var(--mono);text-align:right; }
+  .team-name-input:focus, .team-sueldo-input:focus { outline:none;background:var(--paper); }
+  .btn-del-team {
+    background:none;border:none;color:var(--paper-3);cursor:pointer;
+    font-size:.9rem;padding:8px;transition:color .15s;
+  }
+  .btn-del-team:hover { color:var(--accent-2); }
+  .team-special-badge {
+    font-size:.6rem;font-weight:700;background:rgba(26,58,143,.08);
+    color:var(--accent);padding:1px 6px;border-radius:10px;margin-left:6px;
+  }
+  .btn-add-team {
+    font-size:.78rem;color:var(--accent);background:rgba(26,58,143,.06);
+    border:1px dashed rgba(26,58,143,.3);border-radius:4px;
+    padding:6px 14px;cursor:pointer;font-family:var(--sans);
+    transition:all .15s;margin-top:10px;
+  }
+  .btn-add-team:hover { background:rgba(26,58,143,.12); }
+  .team-rate-hint {
+    font-size:.72rem;color:var(--ink-soft);font-family:var(--mono);
+    padding:2px 10px;text-align:right;
+  }
+
+  /* Autocomplete manager */
+  .ac-item {
+    display:flex;align-items:center;gap:10px;padding:7px 10px;
+    border-bottom:1px solid var(--paper-2);border-radius:4px;
+    transition:background .1s;
+  }
+  .ac-item:hover { background:var(--paper); }
+  .ac-item input[type=checkbox] { flex-shrink:0;accent-color:var(--accent); }
+  .ac-item-text { flex:1;font-size:.83rem;color:var(--ink); }
+  .ac-item-count { font-family:var(--mono);font-size:.72rem;color:var(--ink-soft); }
+  .ac-toolbar {
+    display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;
+  }
+  .ac-toolbar-btn {
+    font-size:.75rem;padding:5px 12px;border-radius:4px;cursor:pointer;
+    font-family:var(--sans);transition:all .15s;border:1.5px solid var(--paper-3);
+    background:transparent;color:var(--ink-mid);
+  }
+  .ac-toolbar-btn:hover { border-color:var(--accent);color:var(--accent); }
+  .ac-toolbar-btn.danger:hover { border-color:var(--accent-2);color:var(--accent-2); }
+
+  /* Formula docs */
+  .formula-block {
+    background:var(--paper);border-radius:8px;padding:18px 20px;
+    margin-bottom:16px;border-left:3px solid var(--accent);
+  }
+  .formula-block.juntas { border-left-color:#1a3a8f; }
+  .formula-block.outsrc { border-left-color:#b45309; }
+  .formula-title { font-weight:700;font-size:.9rem;margin-bottom:6px; }
+  .formula-concept { font-size:.82rem;color:var(--ink-mid);margin-bottom:12px;line-height:1.5; }
+  .formula-steps {
+    background:#fff;border-radius:6px;padding:12px 14px;
+    display:flex;flex-direction:column;gap:6px;
+  }
+  .formula-step {
+    display:grid;grid-template-columns:120px 1fr;gap:8px;align-items:baseline;
+    font-size:.78rem;
+  }
+  .formula-step .label { font-family:var(--mono);color:var(--ink-soft);font-size:.72rem; }
+  .formula-step .expr { color:var(--ink); }
+  .formula-step .result { font-family:var(--mono);color:var(--accent);font-weight:600; }
+  .formula-divider { border:none;border-top:1px solid var(--paper-2);margin:16px 0; }
+  .param-table { width:100%;border-collapse:collapse;font-size:.8rem;margin-top:8px; }
+  .param-table th { text-align:left;padding:6px 10px;background:var(--paper-2);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft); }
+  .param-table td { padding:7px 10px;border-bottom:1px solid var(--paper-2);vertical-align:top; }
+  .param-table td:first-child { font-family:var(--mono);font-weight:600;white-space:nowrap; }
+  .param-table td:last-child { color:var(--ink-mid);line-height:1.45; }
+
   /* ── Subtle fade-in */
   /* Subtle fade-in */
   @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
@@ -611,6 +742,7 @@
     <button onclick="showTab('templates')">📁 Templates</button>
     <button onclick="showTab('historial')">📋 Historial</button>
   </nav>
+  <button onclick="openSettings()" style="background:transparent;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.7);padding:6px 14px;border-radius:30px;font-family:var(--sans);font-size:.8rem;cursor:pointer;transition:all .2s;margin-left:8px" onmouseover="this.style.background='rgba(255,255,255,.1)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,.7)'">⚙ Config</button>
 </header>
 
 <div class="app" id="app-builder">
@@ -917,7 +1049,7 @@
 // ══════════════════════════════════════════════════════
 // DATA
 // ══════════════════════════════════════════════════════
-const TEAM = [
+let TEAM = [
   { id:1,  name:"NC",         sueldo:90000 },
   { id:2,  name:"Jesus ALG",  sueldo:30000 },
   { id:3,  name:"Santiago",   sueldo:30000 },
@@ -1849,7 +1981,24 @@ function _doExportCliente(cotNum) {
     <div class="footer-note">Esta propuesta es confidencial y está dirigida exclusivamente a ${cliente}. Válida por 30 días naturales.</div>
     <div class="footer-brand"><span class="logo-dot" style="width:7px;height:7px;border-radius:50%;background:#c8972a;display:inline-block"></span> ALG Digital</div>
   </div>
-</div></body></html>`;
+</div>
+<!-- ── SETTINGS MODAL ── -->
+<div id="settings-overlay" class="settings-overlay" onclick="if(event.target===this)closeSettings()">
+  <div class="settings-panel">
+    <div class="settings-header">
+      <span class="settings-title">⚙ Configuración del cotizador</span>
+      <button class="settings-close" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="settings-tabs">
+      <button class="settings-tab active" onclick="switchSettingsTab('equipo',this)">👥 Equipo</button>
+      <button class="settings-tab" onclick="switchSettingsTab('datos',this)">🗂 Datos guardados</button>
+      <button class="settings-tab" onclick="switchSettingsTab('formulas',this)">📐 Fórmulas</button>
+    </div>
+    <div class="settings-body" id="settings-body"></div>
+  </div>
+</div>
+
+</body></html>`;
 
   pdfOpen(html);
 }
@@ -3306,6 +3455,404 @@ function setHistFilter(status, btn) {
   if (btn) btn.classList.add('active');
   renderHistorial();
 }
+
+
+// ══════════════════════════════════════════════════════
+// SETTINGS MODAL
+// ══════════════════════════════════════════════════════
+const TEAM_KEY = 'alg_team_v1';
+let _settingsTab = 'equipo';
+let _dragSrcIdx  = null;
+
+// ── Persist / load TEAM from localStorage ────────────
+function loadTeamFromStorage() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(TEAM_KEY));
+    if (Array.isArray(stored) && stored.length > 0) {
+      TEAM.length = 0;
+      stored.forEach(m => TEAM.push(m));
+    }
+  } catch {}
+}
+
+function saveTeamToStorage() {
+  localStorage.setItem(TEAM_KEY, JSON.stringify(TEAM));
+}
+
+// ── Open / close ──────────────────────────────────────
+function openSettings() {
+  document.getElementById('settings-overlay').classList.add('open');
+  renderSettingsTab(_settingsTab);
+}
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('open');
+}
+
+function switchSettingsTab(tab, btn) {
+  _settingsTab = tab;
+  document.querySelectorAll('.settings-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderSettingsTab(tab);
+}
+
+function renderSettingsTab(tab) {
+  const body = document.getElementById('settings-body');
+  if (tab === 'equipo')   body.innerHTML = buildEquipoTab();
+  if (tab === 'datos')    body.innerHTML = buildDatosTab();
+  if (tab === 'formulas') body.innerHTML = buildFormulasTab();
+  if (tab === 'equipo')   attachDragHandlers();
+}
+
+// ══════════════════════════════════════════════════════
+// TAB 1: EQUIPO
+// ══════════════════════════════════════════════════════
+function buildEquipoTab() {
+  const FACTOR = 1/20/6;
+  const rows = TEAM.map((m, i) => {
+    const rate = (m.sueldo * FACTOR).toFixed(2);
+    const special = m.id === 11 ? '<span class="team-special-badge">JUNTAS</span>' :
+                    m.id === 99 ? '<span class="team-special-badge">OUTSRC</span>' : '';
+    const canDel  = m.id !== 11 && m.id !== 99;
+    return `<div class="team-row" data-idx="${i}" draggable="true"
+               ondragstart="onTeamDragStart(event,${i})"
+               ondragover="onTeamDragOver(event,${i})"
+               ondrop="onTeamDrop(event,${i})"
+               ondragleave="onTeamDragLeave(event)">
+      <div class="drag-handle" title="Arrastra para reordenar">⠿</div>
+      <div style="display:flex;align-items:center">
+        <input class="team-name-input" type="text" value="${m.name}"
+          oninput="updateTeamField(${i},'name',this.value)"
+          ${m.id===11||m.id===99?'readonly style="color:var(--ink-soft)"':''}>
+        ${special}
+      </div>
+      <div style="display:flex;align-items:center;border-left:1px solid var(--paper-2)">
+        <span style="font-size:.72rem;color:var(--ink-soft);padding-left:8px">$</span>
+        <input class="team-sueldo-input" type="number" value="${m.sueldo}" min="0" step="500"
+          oninput="updateTeamField(${i},'sueldo',this.value)">
+      </div>
+      <button class="btn-del-team" onclick="deleteTeamMember(${i})"
+        title="Eliminar" ${!canDel?'disabled style="opacity:.25;cursor:not-allowed"':''}>×</button>
+    </div>
+    <div style="display:grid;grid-template-columns:28px 1fr 130px 36px;border-bottom:1px solid var(--paper-2)">
+      <div></div><div></div>
+      <div class="team-rate-hint">$${rate}/hr</div>
+      <div></div>
+    </div>`;
+  }).join('');
+
+  return `
+    <div class="settings-section-title">Colaboradores y tarifas</div>
+    <div style="font-size:.78rem;color:var(--ink-soft);margin-bottom:14px;line-height:1.5">
+      La tarifa por hora se calcula automáticamente: <strong>sueldo ÷ 20 días ÷ 6 hrs</strong>.<br>
+      Los cambios se guardan en este navegador. JUNTAS** y Outsourcing son especiales y no se pueden eliminar.
+    </div>
+    <div style="border:1.5px solid var(--paper-3);border-radius:6px;overflow:hidden">
+      <div style="display:grid;grid-template-columns:28px 1fr 130px 36px;background:var(--paper-2);border-bottom:1px solid var(--paper-3)">
+        <div></div>
+        <div style="padding:6px 10px;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft)">Nombre</div>
+        <div style="padding:6px 10px;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);text-align:right">Sueldo mensual</div>
+        <div></div>
+      </div>
+      <div id="team-rows">${rows}</div>
+    </div>
+    <button class="btn-add-team" onclick="addTeamMember()">＋ Agregar colaborador</button>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button onclick="saveTeamAndClose()" style="padding:9px 20px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:var(--sans);font-size:.85rem;font-weight:600">💾 Guardar cambios</button>
+      <button onclick="resetTeam()" style="padding:9px 16px;border:1.5px solid var(--paper-3);border-radius:6px;background:transparent;cursor:pointer;font-family:var(--sans);font-size:.82rem;color:var(--ink-soft)">↺ Restablecer original</button>
+    </div>`;
+}
+
+function updateTeamField(idx, field, value) {
+  if (field === 'sueldo') TEAM[idx].sueldo = parseFloat(value) || 0;
+  if (field === 'name')   TEAM[idx].name   = value;
+  // Update rate hint live
+  renderSettingsTab('equipo');
+}
+
+function deleteTeamMember(idx) {
+  const m = TEAM[idx];
+  if (m.id === 11 || m.id === 99) return;
+  if (!confirm(`¿Eliminar a "${m.name}" del equipo?`)) return;
+  TEAM.splice(idx, 1);
+  renderSettingsTab('equipo');
+}
+
+function addTeamMember() {
+  const maxId = Math.max(...TEAM.map(t => t.id), 100);
+  TEAM.splice(TEAM.length - 1, 0, { id: maxId + 1, name: 'Nuevo colaborador', sueldo: 15000 });
+  renderSettingsTab('equipo');
+  // Focus the new name input
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('.team-name-input');
+    if (inputs[inputs.length - 2]) { inputs[inputs.length - 2].select(); }
+  }, 50);
+}
+
+function saveTeamAndClose() {
+  saveTeamToStorage();
+  renderServices();
+  refreshSidebar();
+  showToast('Equipo guardado ✓');
+  closeSettings();
+}
+
+const TEAM_DEFAULTS = [
+  { id:1,  name:"NC",         sueldo:90000 },
+  { id:2,  name:"Jesus ALG",  sueldo:30000 },
+  { id:3,  name:"Santiago",   sueldo:30000 },
+  { id:4,  name:"INGRID",     sueldo:20000 },
+  { id:7,  name:"Roberto",    sueldo:20000 },
+  { id:8,  name:"Alfredo",    sueldo:20000 },
+  { id:10, name:"Ana",        sueldo:20000 },
+  { id:11, name:"JUNTAS**",   sueldo:30000 },
+  { id:12, name:"Rocio",      sueldo:20000 },
+  { id:13, name:"Kathia",     sueldo:17000 },
+  { id:14, name:"Gamaliel",   sueldo:14000 },
+  { id:15, name:"Com. MGR.",  sueldo:15000 },
+  { id:16, name:"CARMINA",    sueldo:16500 },
+  { id:17, name:"Copy 2",     sueldo:15000 },
+  { id:18, name:"Isaac",      sueldo:14000 },
+  { id:99, name:"Outsourcing",sueldo:0 },
+];
+
+function resetTeam() {
+  if (!confirm('¿Restablecer el equipo a los valores originales?')) return;
+  TEAM.length = 0;
+  TEAM_DEFAULTS.forEach(m => TEAM.push({...m}));
+  localStorage.removeItem(TEAM_KEY);
+  renderSettingsTab('equipo');
+  showToast('Equipo restablecido ✓');
+}
+
+// ── Drag and drop ─────────────────────────────────────
+function attachDragHandlers() {}  // handlers are inline
+
+function onTeamDragStart(e, idx) {
+  _dragSrcIdx = idx;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => {
+    const rows = document.querySelectorAll('#team-rows .team-row');
+    if (rows[idx]) rows[idx].classList.add('dragging');
+  }, 0);
+}
+
+function onTeamDragOver(e, idx) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('#team-rows .team-row').forEach(r => r.classList.remove('drag-over'));
+  const rows = document.querySelectorAll('#team-rows .team-row');
+  if (rows[idx]) rows[idx].classList.add('drag-over');
+}
+
+function onTeamDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+
+function onTeamDrop(e, targetIdx) {
+  e.preventDefault();
+  if (_dragSrcIdx === null || _dragSrcIdx === targetIdx) return;
+  const moved = TEAM.splice(_dragSrcIdx, 1)[0];
+  TEAM.splice(targetIdx, 0, moved);
+  _dragSrcIdx = null;
+  renderSettingsTab('equipo');
+}
+
+// ══════════════════════════════════════════════════════
+// TAB 2: DATOS GUARDADOS
+// ══════════════════════════════════════════════════════
+function buildDatosTab() {
+  // Collect all unique activity descriptions with counts
+  const map = new Map();
+  const add = (desc, src) => {
+    if (!desc || desc.trim().length < 2) return;
+    const key = desc.trim().toLowerCase();
+    if (!map.has(key)) map.set(key, { desc: desc.trim(), count: 0, sources: new Set() });
+    map.get(key).count++;
+    map.get(key).sources.add(src);
+  };
+
+  services.forEach(svc => svc.phases.forEach(ph => ph.activities.forEach(a => add(a.desc, 'actual'))));
+  try { JSON.parse(localStorage.getItem(LS_KEY)||'[]').forEach(t=>(t.phases||[]).forEach(ph=>(ph.activities||[]).forEach(a=>add(a.desc,'template')))); } catch {}
+  try { JSON.parse(localStorage.getItem(HIST_KEY)||'[]').forEach(h=>(h.services||[]).forEach(s=>(s.phases||[]).forEach(ph=>(ph.activities||[]).forEach(a=>add(a.desc,'historial'))))); } catch {}
+
+  const entries = Array.from(map.values()).sort((a,b) => b.count - a.count);
+  const tmplCount = (() => { try { return JSON.parse(localStorage.getItem(LS_KEY)||'[]').length; } catch { return 0; } })();
+  const histCount = (() => { try { return JSON.parse(localStorage.getItem(HIST_KEY)||'[]').length; } catch { return 0; } })();
+
+  const srcBadge = s => {
+    const labels = {actual:'🔨 Actual', template:'📁 Template', historial:'📋 Historial'};
+    return [...s].map(k => `<span style="font-size:.62rem;background:var(--paper-2);color:var(--ink-soft);padding:1px 5px;border-radius:10px;margin-left:3px">${labels[k]||k}</span>`).join('');
+  };
+
+  const acRows = entries.length ? entries.map((e, i) => `
+    <div class="ac-item">
+      <input type="checkbox" id="ac-${i}" data-key="${e.desc.replace(/"/g,'&quot;')}">
+      <label for="ac-${i}" class="ac-item-text" style="cursor:pointer">
+        ${e.desc}${srcBadge(e.sources)}
+      </label>
+      <span class="ac-item-count">${e.count}×</span>
+    </div>`).join('') :
+    `<div style="padding:20px;text-align:center;color:var(--ink-soft);font-size:.82rem">No hay actividades capturadas aún</div>`;
+
+  return `
+    <!-- Autocomplete pool -->
+    <div class="settings-section-title">Historial de autocompletar</div>
+    <div style="font-size:.78rem;color:var(--ink-soft);margin-bottom:12px;line-height:1.5">
+      Estas son todas las actividades que el cotizador puede sugerir, tomadas de los servicios actuales,
+      templates guardados e historial. Selecciona las que quieras eliminar del pool de sugerencias.
+    </div>
+    <div class="ac-toolbar">
+      <button class="ac-toolbar-btn" onclick="acSelectAll()">Seleccionar todo</button>
+      <button class="ac-toolbar-btn" onclick="acSelectNone()">Deseleccionar todo</button>
+      <button class="ac-toolbar-btn danger" onclick="acDeleteSelected()"
+        style="margin-left:auto">🗑 Eliminar seleccionadas</button>
+    </div>
+    <div style="border:1.5px solid var(--paper-3);border-radius:6px;overflow:hidden;max-height:260px;overflow-y:auto">
+      ${acRows}
+    </div>
+    <div style="font-size:.72rem;color:var(--ink-soft);margin-top:6px">${entries.length} actividades únicas en el pool</div>
+
+    <hr class="formula-divider">
+
+    <!-- Storage summary -->
+    <div class="settings-section-title">Datos en este navegador</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px">
+      <div style="background:var(--paper);border-radius:6px;padding:14px;text-align:center">
+        <div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:var(--accent)">${entries.length}</div>
+        <div style="font-size:.72rem;color:var(--ink-soft);margin-top:3px">actividades únicas</div>
+      </div>
+      <div style="background:var(--paper);border-radius:6px;padding:14px;text-align:center">
+        <div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:var(--accent)">${tmplCount}</div>
+        <div style="font-size:.72rem;color:var(--ink-soft);margin-top:3px">templates guardados</div>
+      </div>
+      <div style="background:var(--paper);border-radius:6px;padding:14px;text-align:center">
+        <div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:var(--accent)">${histCount}</div>
+        <div style="font-size:.72rem;color:var(--ink-soft);margin-top:3px">cotizaciones en historial</div>
+      </div>
+    </div>
+    <div style="font-size:.75rem;color:var(--ink-soft);line-height:1.5">
+      Los datos se guardan en el <strong>localStorage</strong> de este navegador. Exporta los archivos JSON
+      desde Templates e Historial para respaldarlos antes de limpiar.
+    </div>`;
+}
+
+function acSelectAll() {
+  document.querySelectorAll('.ac-item input[type=checkbox]').forEach(c => c.checked = true);
+}
+function acSelectNone() {
+  document.querySelectorAll('.ac-item input[type=checkbox]').forEach(c => c.checked = false);
+}
+function acDeleteSelected() {
+  const toDelete = new Set(
+    [...document.querySelectorAll('.ac-item input[type=checkbox]:checked')]
+      .map(c => c.dataset.key.toLowerCase())
+  );
+  if (!toDelete.size) { showToast('Selecciona al menos una actividad'); return; }
+  if (!confirm(`¿Eliminar ${toDelete.size} actividad(es) seleccionada(s) del pool de sugerencias?\n\nEsto no borra las actividades de los servicios o historial, solo deja de sugerirlas.`)) return;
+
+  // Remove from templates
+  try {
+    const tmpls = JSON.parse(localStorage.getItem(LS_KEY)||'[]');
+    tmpls.forEach(t => (t.phases||[]).forEach(ph => {
+      ph.activities = (ph.activities||[]).filter(a => !toDelete.has((a.desc||'').toLowerCase()));
+    }));
+    localStorage.setItem(LS_KEY, JSON.stringify(tmpls));
+  } catch {}
+
+  // Remove from historial activities
+  try {
+    const hist = JSON.parse(localStorage.getItem(HIST_KEY)||'[]');
+    hist.forEach(h => (h.services||[]).forEach(svc => (svc.phases||[]).forEach(ph => {
+      ph.activities = (ph.activities||[]).filter(a => !toDelete.has((a.desc||'').toLowerCase()));
+    })));
+    localStorage.setItem(HIST_KEY, JSON.stringify(hist));
+  } catch {}
+
+  showToast(`${toDelete.size} actividad(es) eliminada(s) del pool ✓`);
+  renderSettingsTab('datos');
+}
+
+// ══════════════════════════════════════════════════════
+// TAB 3: FÓRMULAS
+// ══════════════════════════════════════════════════════
+function buildFormulasTab() {
+  return `
+    <!-- Parámetros -->
+    <div class="settings-section-title">Parámetros del cotizador</div>
+    <table class="param-table">
+      <thead><tr><th>Parámetro</th><th>Qué controla</th></tr></thead>
+      <tbody>
+        <tr><td>Overhead ALG</td><td>Multiplicador sobre el costo directo que cubre gastos fijos de la agencia (renta, software, admin). Un overhead de 1.2 significa que por cada $1 de costo directo se suman $1.20 adicionales.</td></tr>
+        <tr><td>Factor utilidad</td><td>Porcentaje de utilidad deseado sobre el precio de venta. Con util=0.5 se espera que el 50% del precio final sea ganancia. Afecta el precio lleno.</td></tr>
+        <tr><td>Factor hrs/sueldo</td><td>Constante interna: <strong>1 ÷ 20 días ÷ 6 hrs = 0.008333</strong>. Convierte el sueldo mensual en tarifa por hora efectiva.</td></tr>
+      </tbody>
+    </table>
+
+    <hr class="formula-divider">
+
+    <!-- Actividad normal -->
+    <div class="formula-block">
+      <div class="formula-title">Actividad normal</div>
+      <div class="formula-concept">
+        Cada actividad asignada a un colaborador genera un costo directo (tiempo × tarifa) al que se le suma
+        el overhead de la agencia. El precio de venta se obtiene dividiendo el costo total entre el complemento
+        de la utilidad deseada, de modo que la utilidad quede embebida en el precio.
+      </div>
+      <div class="formula-steps">
+        <div class="formula-step"><span class="label">Tarifa/hr</span><span class="expr">sueldo ÷ 20 ÷ 6</span><span class="result">Ej. $20,000 ÷ 20 ÷ 6 = $166.67/hr</span></div>
+        <div class="formula-step"><span class="label">Costo directo</span><span class="expr">hrs × tarifa/hr</span><span class="result">Ej. 8 hrs × $166.67 = $1,333</span></div>
+        <div class="formula-step"><span class="label">Overhead</span><span class="expr">costo dir. × overhead (1.2)</span><span class="result">Ej. $1,333 × 1.2 = $1,600</span></div>
+        <div class="formula-step"><span class="label">Costo total</span><span class="expr">costo dir. + overhead</span><span class="result">Ej. $1,333 + $1,600 = $2,933</span></div>
+        <div class="formula-step"><span class="label">Precio lleno</span><span class="expr">costo total ÷ (1 − util)</span><span class="result">Ej. $2,933 ÷ (1 − 0.6) = $7,333</span></div>
+        <div class="formula-step"><span class="label">Utilidad</span><span class="expr">precio lleno − costo total</span><span class="result">Ej. $7,333 − $2,933 = $4,400 (60%)</span></div>
+      </div>
+    </div>
+
+    <!-- Juntas -->
+    <div class="formula-block juntas">
+      <div class="formula-title">⏱ Juntas / Project Overhead</div>
+      <div class="formula-concept">
+        Usa exactamente la misma fórmula que una actividad normal, pero <strong>siempre con la tarifa de
+        JUNTAS**</strong> ($30,000/mes = $250/hr) sin importar quién asistió. Captura el costo real
+        del tiempo de coordinación del equipo.
+      </div>
+      <div class="formula-steps">
+        <div class="formula-step"><span class="label">Tarifa JUNTAS</span><span class="expr">$30,000 ÷ 20 ÷ 6</span><span class="result">$250/hr (fija)</span></div>
+        <div class="formula-step"><span class="label">Costo directo</span><span class="expr">hrs junta × $250</span><span class="result">Ej. 4 hrs × $250 = $1,000</span></div>
+        <div class="formula-step"><span class="label">Overhead + precio</span><span class="expr">igual que actividad normal</span><span class="result">Ej. $1,000 → $2,500 precio (50% util)</span></div>
+      </div>
+    </div>
+
+    <!-- Outsourcing -->
+    <div class="formula-block outsrc">
+      <div class="formula-title">📦 Outsourcing / Proveedores</div>
+      <div class="formula-concept">
+        Para proveedores externos el costo de entrada es el monto que se le paga al proveedor.
+        El markup se aplica <strong>sobre ese costo</strong> como margen de gestión (no como overhead ALG).
+        El precio de venta se deriva dividiendo el costo total entre el complemento del markup.
+      </div>
+      <div class="formula-steps">
+        <div class="formula-step"><span class="label">Costo proveedor</span><span class="expr">monto acordado</span><span class="result">Ej. $22,000</span></div>
+        <div class="formula-step"><span class="label">Markup</span><span class="expr">costo × markup%</span><span class="result">Ej. $22,000 × 20% = $4,400</span></div>
+        <div class="formula-step"><span class="label">Costo total</span><span class="expr">costo + markup</span><span class="result">Ej. $22,000 + $4,400 = $26,400</span></div>
+        <div class="formula-step"><span class="label">Precio venta</span><span class="expr">costo total ÷ (1 − markup%)</span><span class="result">Ej. $26,400 ÷ 0.8 = $33,000</span></div>
+        <div class="formula-step"><span class="label">Utilidad</span><span class="expr">precio venta − costo total</span><span class="result">Ej. $33,000 − $26,400 = $6,600 (20%)</span></div>
+      </div>
+    </div>
+
+    <hr class="formula-divider">
+
+    <!-- IVA -->
+    <div class="settings-section-title">IVA y totales</div>
+    <div style="font-size:.8rem;color:var(--ink-mid);line-height:1.6">
+      Los precios en el cotizador son <strong>sin IVA</strong>. El 16% se calcula y muestra únicamente
+      en los PDFs y en la vista de desglose. La utilidad y el porcentaje de utilidad se calculan
+      siempre sobre el precio sin IVA.
+    </div>`;
+}
+
+// ── Load team on startup ──────────────────────────────
+loadTeamFromStorage();
 
 function showToast(msg) {
   let t = document.getElementById('alg-toast');
