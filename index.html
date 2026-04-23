@@ -431,6 +431,14 @@
   .outsrc-btn  { color: #b45309; border-color: rgba(180,83,9,.35); }
   .outsrc-btn:hover  { background: rgba(180,83,9,.07); }
 
+  .tmpl-sort-btn {
+    font-size:.75rem; padding:6px 12px; border-radius:6px;
+    border:1.5px solid var(--paper-3); background:transparent;
+    cursor:pointer; font-family:var(--sans); transition:all .15s; color:var(--ink-mid);
+  }
+  .tmpl-sort-btn:hover  { border-color:var(--accent); color:var(--accent); }
+  .tmpl-sort-btn.active { background:var(--ink); color:#fff; border-color:var(--ink); }
+
   /* ── TEMPLATES ── */
   .tmpl-filter {
     font-size:.78rem; padding:6px 14px; border-radius:20px;
@@ -456,9 +464,13 @@
     font-size:.65rem; font-weight:700; padding:3px 9px; border-radius:20px;
     white-space:nowrap; flex-shrink:0;
   }
-  .level-startup   { background:#e8f5e9; color:#2e7d32; }
-  .level-mediana   { background:#e3f2fd; color:#1565c0; }
-  .level-enterprise{ background:#fce4ec; color:#880e4f; }
+  .level-branding    { background:#fce4ec; color:#880e4f; }
+  .level-digital     { background:#e3f2fd; color:#1565c0; }
+  .level-web         { background:#e8f5e9; color:#2e7d32; }
+  .level-audiovisual { background:#fff3e0; color:#e65100; }
+  .level-estrategia  { background:#ede7f6; color:#4527a0; }
+  .level-pr          { background:#e0f7fa; color:#006064; }
+  .level-otro        { background:#f5f5f5; color:#424242; }
 
   .tmpl-meta { font-size:.75rem; color:var(--ink-soft); }
   .tmpl-notes { font-size:.78rem; color:var(--ink-mid); font-style:italic; }
@@ -483,6 +495,55 @@
   }
   .tmpl-btn-del:hover { border-color:var(--accent-2); color:var(--accent-2); }
 
+  /* ── HISTORIAL ── */
+  .hist-card {
+    background:#fff; border:1.5px solid var(--paper-3); border-radius:10px;
+    margin-bottom:14px; overflow:hidden; box-shadow:var(--shadow);
+    transition: box-shadow .2s;
+  }
+  .hist-card:hover { box-shadow:var(--shadow-lg); }
+  .hist-card-header {
+    display:flex; align-items:center; gap:14px; padding:16px 20px;
+    background:var(--paper-2); border-bottom:1.5px solid var(--paper-3);
+    flex-wrap:wrap;
+  }
+  .hist-status-badge {
+    font-size:.68rem; font-weight:700; padding:3px 10px; border-radius:20px;
+    white-space:nowrap; flex-shrink:0; letter-spacing:.03em;
+  }
+  .status-borrador   { background:#f0f0f0;   color:#5a5a6a; }
+  .status-enviada    { background:#e3f2fd;   color:#1565c0; }
+  .status-aprobada   { background:#e8f5e9;   color:#2e7d32; }
+  .status-rechazada  { background:var(--red-bg); color:var(--accent-2); }
+  .hist-ref { font-family:var(--mono); font-size:.82rem; color:var(--ink); font-weight:600; }
+  .hist-meta { font-size:.75rem; color:var(--ink-soft); margin-left:auto; }
+  .hist-card-body { display:grid; grid-template-columns:repeat(4,1fr); border-bottom:1px solid var(--paper-2); }
+  .hist-kpi { padding:12px 16px; border-right:1px solid var(--paper-2); }
+  .hist-kpi:last-child { border-right:none; }
+  .hist-kpi label { font-size:.65rem; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-soft); display:block; margin-bottom:3px; }
+  .hist-kpi span { font-family:var(--mono); font-size:.9rem; font-weight:600; color:var(--ink); }
+  .hist-services-list { padding:10px 20px; border-bottom:1px solid var(--paper-2); display:flex; flex-wrap:wrap; gap:6px; }
+  .hist-svc-tag { font-size:.72rem; background:rgba(26,58,143,.07); color:var(--accent); padding:2px 8px; border-radius:4px; font-family:var(--mono); }
+  .hist-notes { padding:8px 20px; font-size:.78rem; color:var(--ink-soft); font-style:italic; border-bottom:1px solid var(--paper-2); }
+  .hist-actions { display:flex; gap:8px; padding:12px 16px; flex-wrap:wrap; }
+  .hist-btn {
+    padding:6px 14px; border-radius:5px; font-size:.75rem; font-weight:600;
+    cursor:pointer; font-family:var(--sans); transition:all .15s; border:none;
+  }
+  .hist-btn-load  { background:var(--accent); color:#fff; }
+  .hist-btn-load:hover  { background:#1530a0; }
+  .hist-btn-pdfc  { background:var(--paper-2); color:var(--ink); border:1px solid var(--paper-3); }
+  .hist-btn-pdfc:hover  { background:var(--paper-3); }
+  .hist-btn-pdfa  { background:var(--gold); color:var(--ink); }
+  .hist-btn-pdfa:hover  { background:#b8831a; }
+  .hist-btn-del   { background:transparent; color:var(--ink-soft); border:1px solid var(--paper-3); margin-left:auto; }
+  .hist-btn-del:hover   { border-color:var(--accent-2); color:var(--accent-2); }
+  .hist-status-select {
+    font-size:.72rem; border:1px solid var(--paper-3); border-radius:4px;
+    padding:4px 8px; font-family:var(--sans); background:#fff; cursor:pointer;
+    color:var(--ink-mid);
+  }
+
   /* ── Subtle fade-in */
   /* Subtle fade-in */
   @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
@@ -497,6 +558,7 @@
     <button class="active" onclick="showTab('builder')">Constructor</button>
     <button onclick="showTab('breakdown')">Desglose</button>
     <button onclick="showTab('templates')">📁 Templates</button>
+    <button onclick="showTab('historial')">📋 Historial</button>
   </nav>
 </header>
 
@@ -640,6 +702,10 @@
       <button class="btn-export" onclick="exportCliente()">⬇ PDF Cliente</button>
       <button class="btn-export" onclick="exportAgencia()" style="background:var(--gold);color:var(--ink)">⬇ PDF Agencia (interno)</button>
       <div style="height:1px;background:rgba(255,255,255,.12);margin:4px 0"></div>
+      <button class="btn-export" onclick="saveToHistorial()" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.25)">
+        💾 Guardar en Historial
+      </button>
+      <div style="height:1px;background:rgba(255,255,255,.12);margin:4px 0"></div>
       <button class="btn-export" onclick="exportDashboardJSON()" style="background:#1a6b3c;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px">
         ✅ Aprobar → Exportar al Dashboard
       </button>
@@ -660,12 +726,32 @@
     </div>
   </div>
 
-  <!-- Filter bar -->
-  <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap" id="tmpl-filters">
-    <button class="tmpl-filter active" onclick="filterTemplates('all')">Todos</button>
-    <button class="tmpl-filter" onclick="filterTemplates('startup')">🌱 Startup</button>
-    <button class="tmpl-filter" onclick="filterTemplates('mediana')">🏢 Mediana</button>
-    <button class="tmpl-filter" onclick="filterTemplates('enterprise')">🏛 Enterprise</button>
+  <!-- Search + Filter bar -->
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <div style="flex:1;min-width:220px;position:relative;">
+        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-soft);font-size:.9rem;pointer-events:none;">🔍</span>
+        <input type="text" id="tmpl-search" placeholder="Buscar por nombre, fase o notas…"
+          oninput="renderTemplatesView()"
+          style="width:100%;padding:8px 12px 8px 36px;border:1.5px solid var(--paper-3);border-radius:6px;font-family:var(--sans);font-size:.85rem;background:#fff;color:var(--ink);outline:none;"
+          onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--paper-3)'">
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0;">
+        <button class="tmpl-sort-btn active" id="sort-recent" onclick="setTmplSort('recent',this)" title="Más recientes primero">↓ Recientes</button>
+        <button class="tmpl-sort-btn" id="sort-alpha" onclick="setTmplSort('alpha',this)" title="Orden alfabético">A–Z</button>
+        <button class="tmpl-sort-btn" id="sort-hrs" onclick="setTmplSort('hrs',this)" title="Mayor a menor horas">↓ Horas</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;" id="tmpl-filters">
+      <button class="tmpl-filter active" onclick="filterTemplates('all',this)">Todos</button>
+      <button class="tmpl-filter" onclick="filterTemplates('branding',this)">🎨 Branding</button>
+      <button class="tmpl-filter" onclick="filterTemplates('digital',this)">📱 Digital</button>
+      <button class="tmpl-filter" onclick="filterTemplates('web',this)">🌐 Web</button>
+      <button class="tmpl-filter" onclick="filterTemplates('audiovisual',this)">🎬 Audiovisual</button>
+      <button class="tmpl-filter" onclick="filterTemplates('estrategia',this)">📊 Estrategia</button>
+      <button class="tmpl-filter" onclick="filterTemplates('pr',this)">📣 PR / Eventos</button>
+      <button class="tmpl-filter" onclick="filterTemplates('otro',this)">• Otro</button>
+    </div>
   </div>
 
   <div id="tmpl-grid"></div>
@@ -676,7 +762,57 @@
   </div>
 </div>
 
-<!-- ── SAVE TEMPLATE MODAL ── -->
+<!-- ── HISTORIAL VIEW ── -->
+<div id="app-historial" style="display:none; padding:32px 40px; max-width:980px; margin:0 auto;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+    <h2 style="font-family:var(--sans);font-weight:700;font-size:1.5rem;">📋 Historial de cotizaciones</h2>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span id="hist-count" style="font-size:.8rem;color:var(--ink-soft)"></span>
+      <button class="btn-export" style="margin:0;width:auto;padding:9px 18px;font-size:.8rem;background:var(--accent);color:#fff" onclick="exportHistorialFile()">⬇ Exportar historial (.json)</button>
+      <label class="btn-export" style="margin:0;width:auto;padding:9px 18px;font-size:.8rem;cursor:pointer">
+        ⬆ Importar historial (.json)
+        <input type="file" accept=".json" onchange="importHistorialFile(event)" style="display:none">
+      </label>
+    </div>
+  </div>
+  <div id="hist-list"></div>
+  <div id="hist-empty" style="display:none;text-align:center;padding:60px 20px;color:var(--ink-soft)">
+    <div style="font-size:2.5rem;margin-bottom:12px">🗂</div>
+    <div style="font-weight:600;margin-bottom:6px">Sin cotizaciones guardadas</div>
+    <div style="font-size:.85rem">Usa el botón "💾 Guardar en Historial" del sidebar para guardar la cotización actual.</div>
+  </div>
+</div>
+
+<!-- ── SAVE TO HISTORIAL MODAL ── -->
+<div id="hist-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;padding:32px;width:440px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <h3 style="font-weight:700;font-size:1.1rem;margin-bottom:6px">💾 Guardar cotización</h3>
+    <p style="font-size:.8rem;color:var(--ink-soft);margin-bottom:20px">Se guardará el estado actual de todos los servicios, horas y parámetros.</p>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="field-group">
+        <label>Número / referencia</label>
+        <input type="text" id="hist-ref-input" placeholder="Ej. ALG-2026-031" style="font-family:var(--mono);letter-spacing:.04em">
+      </div>
+      <div class="field-group">
+        <label>Estado</label>
+        <select id="hist-status-input" style="appearance:auto">
+          <option value="borrador">📝 Borrador</option>
+          <option value="enviada">📤 Enviada al cliente</option>
+          <option value="aprobada">✅ Aprobada</option>
+          <option value="rechazada">❌ Rechazada</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>Notas internas (opcional)</label>
+        <input type="text" id="hist-notes-input" placeholder="Ej. Pendiente respuesta, ajustar precio…">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:24px;justify-content:flex-end">
+      <button onclick="closeHistModal()" style="padding:9px 20px;border:1.5px solid var(--paper-3);border-radius:6px;background:transparent;cursor:pointer;font-family:var(--sans);font-size:.85rem">Cancelar</button>
+      <button onclick="confirmSaveHistorial()" style="padding:9px 20px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:var(--sans);font-size:.85rem;font-weight:600">Guardar</button>
+    </div>
+  </div>
+</div>
 <div id="tmpl-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;display:none;align-items:center;justify-content:center">
   <div style="background:#fff;border-radius:12px;padding:32px;width:420px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.3)">
     <h3 style="font-weight:700;font-size:1.1rem;margin-bottom:20px">💾 Guardar como template</h3>
@@ -686,11 +822,15 @@
         <input type="text" id="tmpl-name-input" placeholder="Ej. Brand Strategy Completo">
       </div>
       <div class="field-group">
-        <label>Nivel de cliente</label>
+        <label>Tipo de servicio</label>
         <select id="tmpl-level-input" style="appearance:auto">
-          <option value="startup">🌱 Startup</option>
-          <option value="mediana">🏢 Mediana empresa</option>
-          <option value="enterprise">🏛 Enterprise</option>
+          <option value="branding">🎨 Branding</option>
+          <option value="digital">📱 Digital</option>
+          <option value="web">🌐 Web</option>
+          <option value="audiovisual">🎬 Audiovisual</option>
+          <option value="estrategia">📊 Estrategia</option>
+          <option value="pr">📣 PR / Eventos</option>
+          <option value="otro">• Otro</option>
         </select>
       </div>
       <div class="field-group">
@@ -1235,6 +1375,7 @@ function showTab(tab) {
   document.getElementById('app-builder').style.display   = 'none';
   document.getElementById('app-breakdown').style.display = 'none';
   document.getElementById('app-templates').style.display = 'none';
+  document.getElementById('app-historial').style.display = 'none';
 
   if (tab === 'builder') {
     document.getElementById('app-builder').style.display = '';
@@ -1244,6 +1385,9 @@ function showTab(tab) {
   } else if (tab === 'templates') {
     document.getElementById('app-templates').style.display = 'block';
     renderTemplatesView();
+  } else if (tab === 'historial') {
+    document.getElementById('app-historial').style.display = 'block';
+    renderHistorial();
   }
 }
 
@@ -2168,35 +2312,96 @@ function deleteTemplate(idx) {
 }
 
 // ── Filter ───────────────────────────────────────────────
-function filterTemplates(level) {
+let _tmplSort = 'recent';
+
+function setTmplSort(sort, btn) {
+  _tmplSort = sort;
+  document.querySelectorAll('.tmpl-sort-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTemplatesView();
+}
+
+function filterTemplates(level, btn) {
   _tmplFilter = level;
   document.querySelectorAll('.tmpl-filter').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+  if (btn) btn.classList.add('active');
   renderTemplatesView();
 }
 
 // ── Render the templates grid ─────────────────────────────
-function levelLabel(level) {
-  return { startup:'🌱 Startup', mediana:'🏢 Mediana', enterprise:'🏛 Enterprise' }[level] || level;
-}
-function levelClass(level) {
-  return { startup:'level-startup', mediana:'level-mediana', enterprise:'level-enterprise' }[level] || '';
-}
+const TIPO_LABEL = {
+  branding:    '🎨 Branding',
+  digital:     '📱 Digital',
+  web:         '🌐 Web',
+  audiovisual: '🎬 Audiovisual',
+  estrategia:  '📊 Estrategia',
+  pr:          '📣 PR / Eventos',
+  otro:        '• Otro',
+  // legacy support — map old level values to nearest tipo
+  startup:     '• Otro',
+  mediana:     '• Otro',
+  enterprise:  '• Otro',
+};
+const TIPO_CLASS = {
+  branding:    'level-branding',
+  digital:     'level-digital',
+  web:         'level-web',
+  audiovisual: 'level-audiovisual',
+  estrategia:  'level-estrategia',
+  pr:          'level-pr',
+  otro:        'level-otro',
+  startup:     'level-otro',
+  mediana:     'level-otro',
+  enterprise:  'level-otro',
+};
+function levelLabel(level) { return TIPO_LABEL[level] || '• Otro'; }
+function levelClass(level) { return TIPO_CLASS[level] || 'level-otro'; }
 
 function renderTemplatesView() {
-  const all       = getTemplates();
-  const filtered  = _tmplFilter === 'all' ? all : all.filter(t => t.level === _tmplFilter);
-  const grid      = document.getElementById('tmpl-grid');
-  const empty     = document.getElementById('tmpl-empty');
+  const all    = getTemplates();
+  const query  = (document.getElementById('tmpl-search')?.value || '').toLowerCase().trim();
+  const grid   = document.getElementById('tmpl-grid');
+  const empty  = document.getElementById('tmpl-empty');
+
+  // 1. Filter by tipo
+  let filtered = _tmplFilter === 'all' ? all : all.filter(t => {
+    const lvl = t.level || 'otro';
+    return lvl === _tmplFilter;
+  });
+
+  // 2. Filter by search query (name, notes, phase names)
+  if (query) {
+    filtered = filtered.filter(t => {
+      const haystack = [
+        t.name, t.notes,
+        ...(t.phases||[]).map(p => p.name),
+        ...(t.phases||[]).flatMap(p => (p.activities||[]).map(a => a.desc)),
+      ].join(' ').toLowerCase();
+      return haystack.includes(query);
+    });
+  }
+
+  // 3. Sort
+  if (_tmplSort === 'alpha') {
+    filtered = [...filtered].sort((a,b) => a.name.localeCompare(b.name, 'es'));
+  } else if (_tmplSort === 'hrs') {
+    filtered = [...filtered].sort((a,b) => {
+      const hrsOf = t => (t.phases||[]).reduce((s,p)=>s+(p.activities||[]).reduce((a,x)=>a+(x.hrs||0),0),0)+(t.juntas?.hrs||0);
+      return hrsOf(b) - hrsOf(a);
+    });
+  }
+  // 'recent' = default insertion order (already newest-first)
 
   if (filtered.length === 0) {
     grid.innerHTML = '';
     grid.style.display = 'none';
     empty.style.display = 'block';
-    empty.querySelector('div:last-child').textContent =
-      all.length === 0
+    const msg = empty.querySelector('div:last-child');
+    if (msg) msg.textContent = query
+      ? `No hay templates que coincidan con "${query}".`
+      : all.length === 0
         ? 'Abre un servicio en el Constructor y haz clic en "💾 Guardar template"'
-        : 'No hay templates para este nivel. Prueba con otro filtro.';
+        : 'No hay templates para este tipo. Prueba con otro filtro.';
     return;
   }
 
@@ -2204,7 +2409,6 @@ function renderTemplatesView() {
   grid.style.display  = 'grid';
   grid.className      = 'tmpl-grid';
 
-  // Map actual index in `all` array for delete/load
   grid.innerHTML = filtered.map(t => {
     const realIdx = all.indexOf(t);
     const date    = t.savedAt ? new Date(t.savedAt).toLocaleDateString('es-MX') : '';
@@ -2219,10 +2423,17 @@ function renderTemplatesView() {
       (t.outsourcing||[]).length > 0 ? `📦 ${t.outsourcing.length} proveedor(es)` : ''
     ].filter(Boolean).join(' · ');
 
+    // Highlight search match in name
+    let displayName = t.name;
+    if (query && t.name.toLowerCase().includes(query)) {
+      const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+      displayName = t.name.replace(re, '<mark style="background:#fff3cd;border-radius:2px;padding:0 1px">$1</mark>');
+    }
+
     return `
       <div class="tmpl-card">
         <div class="tmpl-card-top">
-          <div class="tmpl-card-name">${t.name}</div>
+          <div class="tmpl-card-name">${displayName}</div>
           <span class="tmpl-level-badge ${levelClass(t.level)}">${levelLabel(t.level)}</span>
         </div>
         ${t.notes ? `<div class="tmpl-notes">${t.notes}</div>` : ''}
@@ -2237,7 +2448,7 @@ function renderTemplatesView() {
   }).join('');
 }
 
-// ── Export / Import JSON file ─────────────────────────────
+
 function exportTemplatesFile() {
   const templates = getTemplates();
   if (templates.length === 0) { showToast('No hay templates para exportar'); return; }
@@ -2362,7 +2573,357 @@ function exportDashboardJSON() {
   showToast(`Cotización "${proyecto}" exportada ✓`);
 }
 
-// ── Toast notification ────────────────────────────────────
+// ══════════════════════════════════════════════════════
+// HISTORIAL DE COTIZACIONES
+// ══════════════════════════════════════════════════════
+const HIST_KEY = 'alg_historial_v1';
+
+function getHistorial() {
+  try { return JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); }
+  catch { return []; }
+}
+function saveHistorial(arr) {
+  localStorage.setItem(HIST_KEY, JSON.stringify(arr));
+}
+
+// ── Open save modal ───────────────────────────────────
+function saveToHistorial() {
+  if (!services.length) { showToast('Agrega al menos un servicio antes de guardar'); return; }
+  const now = new Date();
+  const ref = `ALG-${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  document.getElementById('hist-ref-input').value   = ref;
+  document.getElementById('hist-status-input').value = 'borrador';
+  document.getElementById('hist-notes-input').value  = '';
+  document.getElementById('hist-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('hist-ref-input').select(), 50);
+}
+
+function closeHistModal() {
+  document.getElementById('hist-modal').style.display = 'none';
+}
+
+document.getElementById('hist-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('hist-modal')) closeHistModal();
+});
+
+function confirmSaveHistorial() {
+  const ref    = document.getElementById('hist-ref-input').value.trim() || 'ALG-S/N';
+  const status = document.getElementById('hist-status-input').value;
+  const notes  = document.getElementById('hist-notes-input').value.trim();
+  const params = getParams();
+  const tot    = calcTotal(params);
+
+  // Deep-snapshot the full cotización state
+  const snapshot = {
+    id:         Date.now(),
+    savedAt:    new Date().toISOString(),
+    ref,
+    status,
+    notes,
+    // Project meta
+    cliente:    document.getElementById('f-cliente').value  || '',
+    proyecto:   document.getElementById('f-proyecto').value || '',
+    fecha:      document.getElementById('f-fecha').value    || '',
+    validez:    document.getElementById('f-validez').value  || '',
+    prep:       document.getElementById('f-prep').value     || '',
+    // Params
+    params: { overhead: params.overhead, util: params.util,
+              dcto: params.dcto, dcto2: params.dcto2 },
+    ppMonths,
+    // Totals summary
+    totales: {
+      hrs:         tot.hrs,
+      costoDir:    tot.costoDir,
+      overhead:    tot.overhead,
+      costoTotal:  tot.costoTotal,
+      precioLleno: tot.precioLleno,
+      precioFinal: tot.precioFinal,
+      utilidad:    tot.utilidad,
+      pctUtil:     tot.pctUtil,
+    },
+    // Full services deep-clone (stripped of runtime IDs for clean reload)
+    services: JSON.parse(JSON.stringify(services.map(svc => ({
+      name:       svc.name,
+      showJuntas: svc.showJuntas,
+      juntas:     { type:'juntas', hrs: svc.juntas.hrs, desc: svc.juntas.desc },
+      outsourcing: (svc.outsourcing||[]).map(o => ({
+        type:'outsourcing', desc:o.desc, costo:o.costo, markup:o.markup
+      })),
+      phases: svc.phases.map(ph => ({
+        name: ph.name,
+        activities: ph.activities.map(a => ({
+          desc: a.desc, memberId: a.memberId, hrs: a.hrs
+        }))
+      }))
+    }))))
+  };
+
+  const hist = getHistorial();
+  hist.unshift(snapshot);
+  saveHistorial(hist);
+  closeHistModal();
+  showToast(`Cotización "${ref}" guardada en historial ✓`);
+}
+
+// ── Load a historial entry into the builder ───────────
+function loadFromHistorial(id) {
+  const hist = getHistorial();
+  const entry = hist.find(h => h.id === id);
+  if (!entry) return;
+  if (!confirm(`¿Cargar la cotización "${entry.ref}" (${entry.cliente || 'sin cliente'})?\nEsto reemplazará los servicios actuales.`)) return;
+
+  // Restore project meta
+  document.getElementById('f-cliente').value  = entry.cliente  || '';
+  document.getElementById('f-proyecto').value = entry.proyecto || '';
+  document.getElementById('f-fecha').value    = entry.fecha    || '';
+  document.getElementById('f-validez').value  = entry.validez  || '';
+  document.getElementById('f-prep').value     = entry.prep     || '';
+
+  // Restore params
+  if (entry.params) {
+    document.getElementById('p-overhead').value = entry.params.overhead ?? 1.5;
+    document.getElementById('p-util').value     = entry.params.util     ?? 0.5;
+    document.getElementById('p-dcto').value     = Math.round((entry.params.dcto  ?? 0.1) * 100);
+    document.getElementById('p-dcto2').value    = Math.round((entry.params.dcto2 ?? 0)   * 100);
+  }
+  ppMonths = entry.ppMonths || 1;
+  document.querySelectorAll('.pp-btn').forEach(b => b.classList.remove('active'));
+  const ppIds = {1:'pp1',2:'pp2',3:'pp3',6:'pp6',12:'pp12'};
+  if (ppIds[ppMonths]) document.getElementById(ppIds[ppMonths]).classList.add('active');
+
+  // Restore services
+  services = [];
+  svcCounter = 0; phaseCounter = 0; actCounter = 0;
+
+  (entry.services || []).forEach(svcData => {
+    const svcId = ++svcCounter;
+    const newSvc = {
+      id: svcId,
+      name: svcData.name,
+      showJuntas: svcData.showJuntas || false,
+      juntas: { type:'juntas', hrs: svcData.juntas?.hrs||0, desc: svcData.juntas?.desc||'Meetings / Project Overhead' },
+      outsourcing: [],
+      phases: [],
+      _open: false,
+    };
+    (svcData.outsourcing||[]).forEach(o => {
+      newSvc.outsourcing.push({ type:'outsourcing', id:++actCounter, desc:o.desc, costo:o.costo, markup:o.markup });
+    });
+    (svcData.phases||[]).forEach(ph => {
+      const phId = ++phaseCounter;
+      const acts = (ph.activities||[]).map(a => ({
+        id: ++actCounter, desc: a.desc, memberId: a.memberId, hrs: a.hrs
+      }));
+      newSvc.phases.push({ id: phId, name: ph.name, activities: acts });
+    });
+    services.push(newSvc);
+  });
+
+  renderServices();
+  refreshSidebar();
+
+  // Switch to builder
+  document.querySelectorAll('header nav button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('header nav button')[0].classList.add('active');
+  document.getElementById('app-builder').style.display   = '';
+  document.getElementById('app-breakdown').style.display = 'none';
+  document.getElementById('app-templates').style.display = 'none';
+  document.getElementById('app-historial').style.display = 'none';
+
+  showToast(`"${entry.ref}" cargada en el constructor ✓`);
+}
+
+// ── Delete a historial entry ──────────────────────────
+function deleteFromHistorial(id) {
+  const hist  = getHistorial();
+  const entry = hist.find(h => h.id === id);
+  if (!entry || !confirm(`¿Eliminar la cotización "${entry.ref}" del historial?`)) return;
+  saveHistorial(hist.filter(h => h.id !== id));
+  renderHistorial();
+}
+
+// ── Update status inline ──────────────────────────────
+function updateHistorialStatus(id, newStatus) {
+  const hist  = getHistorial();
+  const entry = hist.find(h => h.id === id);
+  if (!entry) return;
+  entry.status = newStatus;
+  saveHistorial(hist);
+  renderHistorial();
+}
+
+// ── Re-generate PDF cliente from a snapshot ───────────
+function histPDFCliente(id) {
+  const hist  = getHistorial();
+  const entry = hist.find(h => h.id === id);
+  if (!entry) return;
+
+  // Temporarily load state, generate PDF, restore
+  const _prev = { services: JSON.parse(JSON.stringify(services)), ppMonths };
+  loadSnapshotForPDF(entry);
+  const cotNum = entry.ref || 'ALG-S/N';
+  _doExportCliente(cotNum);
+  restoreAfterPDF(_prev);
+}
+
+// ── Re-generate PDF agencia from a snapshot ───────────
+function histPDFAgencia(id) {
+  const hist  = getHistorial();
+  const entry = hist.find(h => h.id === id);
+  if (!entry) return;
+
+  const _prev = { services: JSON.parse(JSON.stringify(services)), ppMonths };
+  loadSnapshotForPDF(entry);
+  exportAgencia();
+  restoreAfterPDF(_prev);
+}
+
+function loadSnapshotForPDF(entry) {
+  // Restore meta fields temporarily for PDF generation
+  document.getElementById('f-cliente').value  = entry.cliente  || '';
+  document.getElementById('f-proyecto').value = entry.proyecto || '';
+  document.getElementById('f-fecha').value    = entry.fecha    || '';
+  document.getElementById('f-validez').value  = entry.validez  || '';
+  document.getElementById('f-prep').value     = entry.prep     || '';
+  if (entry.params) {
+    document.getElementById('p-overhead').value = entry.params.overhead ?? 1.5;
+    document.getElementById('p-util').value     = entry.params.util     ?? 0.5;
+    document.getElementById('p-dcto').value     = Math.round((entry.params.dcto  ?? 0.1) * 100);
+    document.getElementById('p-dcto2').value    = Math.round((entry.params.dcto2 ?? 0)   * 100);
+  }
+  ppMonths = entry.ppMonths || 1;
+
+  services = [];
+  svcCounter = 0; phaseCounter = 0; actCounter = 0;
+  (entry.services || []).forEach(svcData => {
+    const svcId = ++svcCounter;
+    const newSvc = {
+      id: svcId, name: svcData.name,
+      showJuntas: svcData.showJuntas || false,
+      juntas: { type:'juntas', hrs: svcData.juntas?.hrs||0, desc: svcData.juntas?.desc||'' },
+      outsourcing: [], phases: [],
+    };
+    (svcData.outsourcing||[]).forEach(o => {
+      newSvc.outsourcing.push({ type:'outsourcing', id:++actCounter, desc:o.desc, costo:o.costo, markup:o.markup });
+    });
+    (svcData.phases||[]).forEach(ph => {
+      const phId = ++phaseCounter;
+      newSvc.phases.push({ id:phId, name:ph.name, activities:(ph.activities||[]).map(a=>({id:++actCounter,desc:a.desc,memberId:a.memberId,hrs:a.hrs})) });
+    });
+    services.push(newSvc);
+  });
+}
+
+function restoreAfterPDF(prev) {
+  // The PDF window opens async, so we restore after a short delay
+  setTimeout(() => {
+    services = prev.services;
+    ppMonths = prev.ppMonths;
+    renderServices();
+    refreshSidebar();
+  }, 300);
+}
+
+// ── Render historial view ─────────────────────────────
+function renderHistorial() {
+  const hist  = getHistorial();
+  const list  = document.getElementById('hist-list');
+  const empty = document.getElementById('hist-empty');
+  const count = document.getElementById('hist-count');
+
+  count.textContent = hist.length ? `${hist.length} cotización${hist.length>1?'es':''}` : '';
+
+  if (!hist.length) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  const statusLabel = { borrador:'📝 Borrador', enviada:'📤 Enviada', aprobada:'✅ Aprobada', rechazada:'❌ Rechazada' };
+  const statusClass = { borrador:'status-borrador', enviada:'status-enviada', aprobada:'status-aprobada', rechazada:'status-rechazada' };
+
+  const fmtDate = iso => {
+    if (!iso) return '—';
+    const [y,m,d] = iso.split('T')[0].split('-');
+    const M = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    return `${parseInt(d)} ${M[parseInt(m)-1]} ${y}`;
+  };
+
+  list.innerHTML = hist.map(entry => {
+    const tot    = entry.totales || {};
+    const util   = tot.pctUtil != null ? (tot.pctUtil*100).toFixed(1) : '—';
+    const clr    = parseFloat(util) >= 40 ? 'var(--green)' : parseFloat(util) >= 25 ? 'var(--gold)' : 'var(--accent-2)';
+    const svcTags = (entry.services||[]).map(s =>
+      `<span class="hist-svc-tag">${s.name}</span>`).join('');
+    const statusOpts = ['borrador','enviada','aprobada','rechazada'].map(s =>
+      `<option value="${s}" ${entry.status===s?'selected':''}>${statusLabel[s]}</option>`).join('');
+
+    return `
+      <div class="hist-card">
+        <div class="hist-card-header">
+          <span class="hist-status-badge ${statusClass[entry.status]||'status-borrador'}">${statusLabel[entry.status]||'📝 Borrador'}</span>
+          <span class="hist-ref">${entry.ref}</span>
+          <span style="font-size:.88rem;font-weight:700;color:var(--ink)">${entry.cliente||'Sin cliente'}</span>
+          <span style="font-size:.8rem;color:var(--ink-soft)">${entry.proyecto||''}</span>
+          <span class="hist-meta">Guardada ${fmtDate(entry.savedAt)}</span>
+        </div>
+        <div class="hist-card-body">
+          <div class="hist-kpi"><label>Precio final</label><span>${fmt(tot.precioFinal||0)}</span></div>
+          <div class="hist-kpi"><label>Costo ALG</label><span>${fmt(tot.costoTotal||0)}</span></div>
+          <div class="hist-kpi"><label>Utilidad</label><span style="color:${clr}">${fmt(tot.utilidad||0)}</span></div>
+          <div class="hist-kpi"><label>% Util · Hrs</label><span style="color:${clr}">${util}% · ${(tot.hrs||0).toFixed(1)}h</span></div>
+        </div>
+        ${svcTags ? `<div class="hist-services-list">${svcTags}</div>` : ''}
+        ${entry.notes ? `<div class="hist-notes">${entry.notes}</div>` : ''}
+        <div class="hist-actions">
+          <button class="hist-btn hist-btn-load" onclick="loadFromHistorial(${entry.id})">⬆ Cargar en constructor</button>
+          <button class="hist-btn hist-btn-pdfc" onclick="histPDFCliente(${entry.id})">⬇ PDF Cliente</button>
+          <button class="hist-btn hist-btn-pdfa" onclick="histPDFAgencia(${entry.id})">⬇ PDF Agencia</button>
+          <select class="hist-status-select" onchange="updateHistorialStatus(${entry.id}, this.value)" title="Cambiar estado">
+            ${statusOpts}
+          </select>
+          <button class="hist-btn hist-btn-del" onclick="deleteFromHistorial(${entry.id})">🗑 Eliminar</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Export / Import JSON ──────────────────────────────
+function exportHistorialFile() {
+  const hist = getHistorial();
+  if (!hist.length) { showToast('No hay cotizaciones en el historial'); return; }
+  const blob = new Blob([JSON.stringify(hist, null, 2)], {type:'application/json'});
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = `ALG_historial_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importHistorialFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!Array.isArray(imported)) throw new Error('Formato inválido');
+      const existing = getHistorial();
+      const seen     = new Set(existing.map(h => h.id));
+      const deduped  = [...existing, ...imported.filter(h => !seen.has(h.id))];
+      saveHistorial(deduped);
+      renderHistorial();
+      showToast(`${imported.length} cotización(es) importada(s) ✓`);
+    } catch {
+      showToast('Error al leer el archivo. ¿Es un JSON válido?');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+
 function showToast(msg) {
   let t = document.getElementById('alg-toast');
   if (!t) {
