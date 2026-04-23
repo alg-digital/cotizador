@@ -1395,7 +1395,7 @@ function renderServices() {
             <textarea class="act-desc" rows="1" placeholder="Actividad / Entregable…"
               oninput="updateField(${svc.id},${ph.id},${act.id},'desc',this.value);showSuggestions(this)"
               onfocus="showSuggestions(this)"
-              onblur="hideSuggestions(this)"
+              onblur="hideSuggestions(this); autosaveToDict(this.value)"
               onkeydown="handleSuggestionKey(event,this)"
               autocomplete="off"
             >${act.desc}</textarea>
@@ -3277,20 +3277,11 @@ function importHistorialFile(event) {
 // FEATURE 1: AUTOCOMPLETAR ACTIVIDADES
 // ══════════════════════════════════════════════════════
 function getActivitySuggestions() {
-  const map  = new Map();
-  const excl = getAcExclusions();
-  const add = (desc, hrs) => {
-    if (excl && excl.has((desc||"").trim().toLowerCase())) return; // excluded
-    if (!desc || desc.trim().length < 2) return;
-    const key = desc.trim().toLowerCase();
-    if (!map.has(key)) map.set(key, { desc: desc.trim(), hrs: hrs || 0, count: 0 });
-    map.get(key).count++;
-    if (hrs > 0) map.get(key).hrs = hrs;
-  };
-  services.forEach(svc => svc.phases.forEach(ph => ph.activities.forEach(a => add(a.desc, a.hrs))));
-  try { JSON.parse(localStorage.getItem(LS_KEY)||'[]').forEach(t=>(t.phases||[]).forEach(ph=>(ph.activities||[]).forEach(a=>add(a.desc,a.hrs)))); } catch {}
-  try { JSON.parse(localStorage.getItem(HIST_KEY)||'[]').forEach(h=>(h.services||[]).forEach(s=>(s.phases||[]).forEach(ph=>(ph.activities||[]).forEach(a=>add(a.desc,a.hrs))))); } catch {}
-  return Array.from(map.values()).sort((a,b) => b.count - a.count);
+  const seen = new Set(), items = [];
+  const add = p => { if(!p||p.trim().length<2) return; const k=p.trim().toLowerCase(); if(seen.has(k)) return; seen.add(k); items.push(p.trim()); };
+  getDict().forEach(p => add(p));
+  services.forEach(svc => svc.phases.forEach(ph => ph.activities.forEach(a => add(a.desc))));
+  return items;
 }
 
 let _suggestionSource = null;
@@ -3301,17 +3292,16 @@ function showSuggestions(textarea) {
   if (!box) return;
   if (query.length < 1) { box.style.display = 'none'; return; }
   const matches = getActivitySuggestions()
-    .filter(s => s.desc.toLowerCase().includes(query) && s.desc.toLowerCase() !== query)
+    .filter(s => s.toLowerCase().includes(query) && s.toLowerCase() !== query)
     .slice(0, 8);
   if (!matches.length) { box.style.display = 'none'; return; }
   const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
   const re  = new RegExp(`(${esc(query)})`,'gi');
   box.innerHTML = matches.map((s,i)=>`
     <div class="act-suggestion-item" data-idx="${i}"
-         data-desc="${s.desc.replace(/"/g,'&quot;')}" data-hrs="${s.hrs}"
+         data-desc="${s.replace(/"/g,'&quot;')}" data-hrs="0"
          onmousedown="applySuggestion(event,this)">
-      ${s.desc.replace(re,'<mark>$1</mark>')}
-      ${s.hrs>0?`<span class="act-suggestion-hrs">${s.hrs}h</span>`:''}
+      ${s.replace(re,'<mark>$1</mark>')}
     </div>`).join('');
   box.style.display = 'block';
   _suggestionSource = textarea;
@@ -3708,71 +3698,44 @@ function onTeamDrop(e, targetIdx) {
 // TAB 2: DATOS GUARDADOS
 // ══════════════════════════════════════════════════════
 function buildDatosTab() {
-  // Collect all unique activity descriptions with counts
-  const map = new Map();
-  const add = (desc, src) => {
-    if (!desc || desc.trim().length < 2) return;
-    const key = desc.trim().toLowerCase();
-    if (!map.has(key)) map.set(key, { desc: desc.trim(), count: 0, sources: new Set() });
-    map.get(key).count++;
-    map.get(key).sources.add(src);
-  };
-
-  services.forEach(svc => svc.phases.forEach(ph => ph.activities.forEach(a => add(a.desc, 'actual'))));
-  try { JSON.parse(localStorage.getItem(LS_KEY)||'[]').forEach(t=>(t.phases||[]).forEach(ph=>(ph.activities||[]).forEach(a=>add(a.desc,'template')))); } catch {}
-  try { JSON.parse(localStorage.getItem(HIST_KEY)||'[]').forEach(h=>(h.services||[]).forEach(s=>(s.phases||[]).forEach(ph=>(ph.activities||[]).forEach(a=>add(a.desc,'historial'))))); } catch {}
-
-  const entries = Array.from(map.values()).sort((a,b) => b.count - a.count);
+  const dict      = getDict();
   const tmplCount = (() => { try { return JSON.parse(localStorage.getItem(LS_KEY)||'[]').length; } catch { return 0; } })();
   const histCount = (() => { try { return JSON.parse(localStorage.getItem(HIST_KEY)||'[]').length; } catch { return 0; } })();
-
-  const srcBadge = s => {
-    const labels = {actual:'🔨 Actual', template:'📁 Template', historial:'📋 Historial'};
-    return [...s].map(k => `<span style="font-size:.62rem;background:var(--paper-2);color:var(--ink-soft);padding:1px 5px;border-radius:10px;margin-left:3px">${labels[k]||k}</span>`).join('');
-  };
-
-  const excl      = getAcExclusions();
-  const excl_count = excl.size;
-
-  const acRows = entries.length ? entries.map((e, i) => `
-    <div class="ac-item">
-      <input type="checkbox" id="ac-${i}" data-key="${e.desc.replace(/"/g,'&quot;')}">
-      <label for="ac-${i}" class="ac-item-text" style="cursor:pointer">
-        ${e.desc}${srcBadge(e.sources)}
-      </label>
-      <span class="ac-item-count" title="Aparece ${e.count} veces en total (servicios + templates + historial)">${e.count}×</span>
-    </div>`).join('') :
-    `<div style="padding:20px;text-align:center;color:var(--ink-soft);font-size:.82rem">No hay actividades capturadas aún</div>`;
-
+  const dictRows  = dict.length
+    ? dict.map((phrase, i) => `
+        <div class="ac-item">
+          <span class="ac-item-text">${phrase}</span>
+          <button onclick="removeDictEntry(${i})"
+            style="background:none;border:none;color:var(--paper-3);cursor:pointer;font-size:.9rem;padding:2px 6px;transition:color .15s;flex-shrink:0"
+            onmouseover="this.style.color='var(--accent-2)'" onmouseout="this.style.color='var(--paper-3)'"
+            title="Eliminar">×</button>
+        </div>`).join('')
+    : `<div style="padding:20px;text-align:center;color:var(--ink-soft);font-size:.82rem">El diccionario está vacío. Las frases que escribas en el constructor se guardan automáticamente.</div>`;
   return `
-    <!-- Autocomplete pool -->
-    <div class="settings-section-title">Historial de autocompletar</div>
-    <div style="font-size:.78rem;color:var(--ink-soft);margin-bottom:12px;line-height:1.5">
-      Estas son todas las actividades que el cotizador puede sugerir, tomadas de los servicios actuales,
-      templates guardados e historial. Selecciona las que quieras eliminar del pool de sugerencias.
+    <div class="settings-section-title">Diccionario de autocompletar</div>
+    <div style="font-size:.78rem;color:var(--ink-mid);margin-bottom:14px;line-height:1.5">
+      Estas frases son las que el cotizador sugiere al escribir actividades en el constructor. Se guardan automáticamente al terminar de escribir, o agrégalas aquí manualmente.
     </div>
-    <div class="ac-toolbar">
-      <button class="ac-toolbar-btn" onclick="acSelectAll()">Seleccionar todo</button>
-      <button class="ac-toolbar-btn" onclick="acSelectNone()">Deseleccionar todo</button>
-      <button class="ac-toolbar-btn danger" onclick="acDeleteSelected()"
-        style="margin-left:auto">🗑 Eliminar seleccionadas</button>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <input type="text" id="dict-new-input" placeholder="Agregar frase manualmente…"
+        onkeydown="if(event.key==='Enter') addDictEntry()"
+        style="flex:1;padding:8px 12px;border:1.5px solid var(--paper-3);border-radius:6px;font-family:var(--sans);font-size:.85rem;outline:none"
+        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--paper-3)'">
+      <button onclick="addDictEntry()" style="padding:8px 16px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:var(--sans);font-size:.82rem;font-weight:600">＋ Agregar</button>
     </div>
-    <div style="border:1.5px solid var(--paper-3);border-radius:6px;overflow:hidden;max-height:260px;overflow-y:auto">
-      ${acRows}
+    <div style="border:1.5px solid var(--paper-3);border-radius:6px;overflow:hidden;max-height:300px;overflow-y:auto;margin-bottom:8px">
+      ${dictRows}
     </div>
-    <div style="font-size:.72rem;color:var(--ink-soft);margin-top:6px">
-    ${entries.length} actividades únicas en el pool &nbsp;·&nbsp; ${excl_count} oculta${excl_count!==1?'s':''}
-    ${excl_count > 0 ? '<button onclick="clearAcExclusions()" style="margin-left:6px;font-size:.7rem;color:var(--accent);background:none;border:none;cursor:pointer;font-family:var(--sans);text-decoration:underline">Restaurar ocultas</button>' : ''}
-  </div>
-
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <span style="font-size:.72rem;color:var(--ink-soft)">${dict.length} frase${dict.length!==1?'s':''} en el diccionario</span>
+      ${dict.length > 0 ? `<button onclick="clearDict()" style="font-size:.72rem;color:var(--ink-soft);background:none;border:none;cursor:pointer;font-family:var(--sans);text-decoration:underline">Vaciar diccionario</button>` : ''}
+    </div>
     <hr class="formula-divider">
-
-    <!-- Storage summary -->
     <div class="settings-section-title">Datos en este navegador</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px">
       <div style="background:var(--paper);border-radius:6px;padding:14px;text-align:center">
-        <div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:var(--accent)">${entries.length}</div>
-        <div style="font-size:.72rem;color:var(--ink-soft);margin-top:3px">actividades únicas</div>
+        <div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:var(--accent)">${dict.length}</div>
+        <div style="font-size:.72rem;color:var(--ink-soft);margin-top:3px">frases en diccionario</div>
       </div>
       <div style="background:var(--paper);border-radius:6px;padding:14px;text-align:center">
         <div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;color:var(--accent)">${tmplCount}</div>
@@ -3783,10 +3746,7 @@ function buildDatosTab() {
         <div style="font-size:.72rem;color:var(--ink-soft);margin-top:3px">cotizaciones en historial</div>
       </div>
     </div>
-    <div style="font-size:.75rem;color:var(--ink-soft);line-height:1.5">
-      Los datos se guardan en el <strong>localStorage</strong> de este navegador. Exporta los archivos JSON
-      desde Templates e Historial para respaldarlos antes de limpiar.
-    </div>`;
+    <div style="font-size:.75rem;color:var(--ink-soft);line-height:1.5">Los datos se guardan en el <strong>localStorage</strong> de este navegador. Exporta los archivos JSON desde Templates e Historial para respaldarlos antes de limpiar.</div>`;
 }
 
 function clearAcExclusions() {
@@ -3796,14 +3756,48 @@ function clearAcExclusions() {
   renderSettingsTab('datos');
 }
 
+function addDictEntry() {
+  const input = document.getElementById('dict-new-input');
+  const phrase = input?.value?.trim();
+  if (!phrase || phrase.length < 2) { showToast('Escribe al menos 2 caracteres'); return; }
+  const dict = getDict();
+  if (dict.some(p => p.toLowerCase() === phrase.toLowerCase())) { showToast('Esa frase ya está en el diccionario'); return; }
+  dict.unshift(phrase); saveDict(dict);
+  if (input) input.value = '';
+  renderSettingsTab('datos');
+}
+
+function removeDictEntry(idx) {
+  const dict = getDict(); dict.splice(idx, 1); saveDict(dict); renderSettingsTab('datos');
+}
+
+function clearDict() {
+  if (!confirm('¿Vaciar el diccionario completo?')) return;
+  saveDict([]); renderSettingsTab('datos'); showToast('Diccionario vaciado ✓');
+}
+
+function autosaveToDict(value) {
+  const phrase = (value || '').trim();
+  if (!phrase || phrase.length < 2) return;
+  const dict = getDict();
+  if (dict.some(p => p.toLowerCase() === phrase.toLowerCase())) return;
+  dict.push(phrase); saveDict(dict);
+}
+
 function acSelectAll() {
   document.querySelectorAll('.ac-item input[type=checkbox]').forEach(c => c.checked = true);
 }
 function acSelectNone() {
   document.querySelectorAll('.ac-item input[type=checkbox]').forEach(c => c.checked = false);
 }
-// Exclusion list for autocomplete
+// Autocomplete dictionary
+const DICT_KEY = 'alg_dict_v1';
 const AC_EXCLUDE_KEY = 'alg_ac_exclude_v1';
+
+function getDict() {
+  try { return JSON.parse(localStorage.getItem(DICT_KEY) || '[]'); } catch { return []; }
+}
+function saveDict(arr) { localStorage.setItem(DICT_KEY, JSON.stringify(arr)); }
 function getAcExclusions() {
   try { return new Set(JSON.parse(localStorage.getItem(AC_EXCLUDE_KEY) || '[]')); }
   catch { return new Set(); }
@@ -4164,9 +4158,9 @@ function showToast(msg) {
     </div>
     <div class="settings-tabs">
       <button class="settings-tab active" onclick="switchSettingsTab('equipo',this)">👥 Equipo</button>
-      <button class="settings-tab" onclick="switchSettingsTab('datos',this)">🗂 Datos guardados</button>
-      <button class="settings-tab" onclick="switchSettingsTab('formulas',this)">📐 Fórmulas</button>
       <button class="settings-tab" onclick="switchSettingsTab('params',this)">🎛 Parámetros</button>
+      <button class="settings-tab" onclick="switchSettingsTab('formulas',this)">📐 Fórmulas</button>
+      <button class="settings-tab" onclick="switchSettingsTab('datos',this)">📚 Datos guardados</button>
     </div>
     <div class="settings-body" id="settings-body"></div>
   </div>
