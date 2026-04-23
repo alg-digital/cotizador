@@ -1989,22 +1989,6 @@ function _doExportCliente(cotNum) {
     <div class="footer-brand"><span class="logo-dot" style="width:7px;height:7px;border-radius:50%;background:#c8972a;display:inline-block"></span> ALG Digital</div>
   </div>
 </div>
-<!-- ── SETTINGS MODAL ── -->
-<div id="settings-overlay" class="settings-overlay" onclick="if(event.target===this)closeSettings()">
-  <div class="settings-panel">
-    <div class="settings-header">
-      <span class="settings-title">⚙ Configuración del cotizador</span>
-      <button class="settings-close" onclick="closeSettings()">✕</button>
-    </div>
-    <div class="settings-tabs">
-      <button class="settings-tab active" onclick="switchSettingsTab('equipo',this)">👥 Equipo</button>
-      <button class="settings-tab" onclick="switchSettingsTab('datos',this)">🗂 Datos guardados</button>
-      <button class="settings-tab" onclick="switchSettingsTab('formulas',this)">📐 Fórmulas</button>
-    </div>
-    <div class="settings-body" id="settings-body"></div>
-  </div>
-</div>
-
 </body></html>`;
 
   pdfOpen(html);
@@ -3885,5 +3869,22 @@ function showToast(msg) {
 }
 
 </script>
+
+<!-- ── SETTINGS MODAL ── -->
+<div id="settings-overlay" class="settings-overlay" onclick="if(event.target===this)closeSettings()">
+  <div class="settings-panel">
+    <div class="settings-header">
+      <span class="settings-title">⚙ Configuración del cotizador</span>
+      <button class="settings-close" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="settings-tabs">
+      <button class="settings-tab active" onclick="switchSettingsTab('equipo',this)">👥 Equipo</button>
+      <button class="settings-tab" onclick="switchSettingsTab('datos',this)">🗂 Datos guardados</button>
+      <button class="settings-tab" onclick="switchSettingsTab('formulas',this)">📐 Fórmulas</button>
+    </div>
+    <div class="settings-body" id="settings-body"></div>
+  </div>
+</div>
+
 </body>
 </html>
