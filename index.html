@@ -1318,8 +1318,30 @@ function teamBreakdown(params) {
 // ══════════════════════════════════════════════════════
 // FORMAT
 // ══════════════════════════════════════════════════════
-const fmt = n => '$' + n.toLocaleString('es-MX', {minimumFractionDigits:0, maximumFractionDigits:0});
+const fmtRaw = n => '$' + n.toLocaleString('es-MX', {minimumFractionDigits:0, maximumFractionDigits:0});
 const fmtPct = n => (n*100).toFixed(1) + '%';
+
+// ── Rounding config ──────────────────────────────────────
+const ROUND_KEY = 'alg_rounding_v1';
+let _roundEnabled   = false;
+let _roundThreshold = 400;
+
+function loadRoundingConfig() {
+  try {
+    const s = JSON.parse(localStorage.getItem(ROUND_KEY));
+    if (s) { _roundEnabled = !!s.enabled; _roundThreshold = s.threshold ?? 400; }
+  } catch {}
+}
+function saveRoundingConfig() {
+  localStorage.setItem(ROUND_KEY, JSON.stringify({ enabled: _roundEnabled, threshold: _roundThreshold }));
+}
+function roundPrice(n) {
+  if (!_roundEnabled) return n;
+  const rem = n % 1000;
+  if (rem === 0) return n;
+  return rem >= _roundThreshold ? n + (1000 - rem) : n - rem;
+}
+const fmt = n => fmtRaw(roundPrice(n));
 
 // ══════════════════════════════════════════════════════
 // RENDER SERVICES
@@ -3491,6 +3513,7 @@ function renderSettingsTab(tab) {
   if (tab === 'equipo')   body.innerHTML = buildEquipoTab();
   if (tab === 'datos')    body.innerHTML = buildDatosTab();
   if (tab === 'formulas') body.innerHTML = buildFormulasTab();
+  if (tab === 'params')   body.innerHTML = buildParamsTab();
   if (tab === 'equipo')   attachDragHandlers();
 }
 
@@ -3851,6 +3874,150 @@ function buildFormulasTab() {
 
 // ── Load team on startup ──────────────────────────────
 loadTeamFromStorage();
+loadRoundingConfig();
+
+
+// ══════════════════════════════════════════════════════
+// TAB 4: PARÁMETROS (REDONDEO + FUTURO)
+// ══════════════════════════════════════════════════════
+function buildParamsTab() {
+  const ex = _roundEnabled ? roundPrice(17967) : 17967;
+  const ex2 = _roundEnabled ? roundPrice(29608) : 29608;
+  const ex3 = _roundEnabled ? roundPrice(30250) : 30250;
+
+  return `
+    <div class="settings-section-title">Redondeo de precios por servicio</div>
+    <div style="font-size:.78rem;color:var(--ink-mid);margin-bottom:18px;line-height:1.6">
+      Cuando está activo, cada precio por servicio se redondea al millar más cercano según el umbral.
+      Si la fracción del millar es <strong>≥ umbral</strong>, sube al siguiente millar.
+      Si es <strong>menor</strong>, baja al millar anterior.
+    </div>
+
+    <!-- Toggle -->
+    <div style="display:flex;align-items:center;justify-content:space-between;
+                padding:14px 18px;background:var(--paper);border-radius:8px;
+                border:1.5px solid var(--paper-3);margin-bottom:16px;">
+      <div>
+        <div style="font-weight:700;font-size:.88rem;">Activar redondeo</div>
+        <div style="font-size:.75rem;color:var(--ink-soft);margin-top:2px">
+          Aplica a todos los precios mostrados y en PDFs
+        </div>
+      </div>
+      <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer">
+        <input type="checkbox" id="round-toggle" ${_roundEnabled ? 'checked' : ''}
+          onchange="toggleRounding(this.checked)"
+          style="opacity:0;width:0;height:0;position:absolute">
+        <span id="round-track" style="
+          position:absolute;inset:0;border-radius:24px;transition:.2s;
+          background:${_roundEnabled ? 'var(--accent)' : 'var(--paper-3)'};
+        "></span>
+        <span id="round-thumb" style="
+          position:absolute;top:3px;left:${_roundEnabled ? '23px' : '3px'};
+          width:18px;height:18px;border-radius:50%;background:#fff;
+          box-shadow:0 1px 4px rgba(0,0,0,.2);transition:.2s;
+        "></span>
+      </label>
+    </div>
+
+    <!-- Threshold -->
+    <div style="display:flex;align-items:center;gap:16px;padding:14px 18px;
+                background:var(--paper);border-radius:8px;
+                border:1.5px solid var(--paper-3);margin-bottom:20px;
+                ${!_roundEnabled ? 'opacity:.45;pointer-events:none' : ''}">
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:.88rem;">Umbral de redondeo</div>
+        <div style="font-size:.75rem;color:var(--ink-soft);margin-top:2px">
+          Fracción del millar a partir de la cual se sube (0–999)
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="number" id="round-threshold" value="${_roundThreshold}"
+          min="1" max="999" step="50"
+          oninput="previewRounding()"
+          style="width:80px;padding:8px 10px;border:1.5px solid var(--paper-3);
+                 border-radius:6px;font-family:var(--mono);font-size:.9rem;text-align:right">
+        <button onclick="applyRoundingConfig()" style="
+          padding:8px 16px;background:var(--accent);color:#fff;border:none;
+          border-radius:6px;cursor:pointer;font-family:var(--sans);font-size:.82rem;font-weight:600">
+          Aplicar
+        </button>
+      </div>
+    </div>
+
+    <!-- Live preview -->
+    <div class="settings-section-title">Vista previa (ejemplo: Campo Claro)</div>
+    <div id="round-preview" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+      ${buildRoundPreview()}
+    </div>
+    <div style="font-size:.72rem;color:var(--ink-soft);margin-top:10px;line-height:1.5">
+      Los valores originales sin redondeo siempre se usan para los cálculos internos
+      (utilidad, costo total, etc.). El redondeo solo afecta la <strong>presentación</strong>
+      del precio de venta.
+    </div>`;
+}
+
+function buildRoundPreview() {
+  const examples = [
+    { label: 'Packaging',      raw: 17967 },
+    { label: 'Web Landing',    raw: 29608 },
+    { label: 'Brand Identity', raw: 30250 },
+  ];
+  return examples.map(e => {
+    const rounded = roundPrice(e.raw);
+    const diff    = rounded - e.raw;
+    const changed = diff !== 0;
+    const arrow   = diff > 0 ? '↑' : diff < 0 ? '↓' : '';
+    const arrowClr = diff > 0 ? 'var(--green)' : diff < 0 ? 'var(--accent-2)' : 'var(--ink-soft)';
+    return `
+      <div style="background:var(--paper);border-radius:6px;padding:12px 14px;
+                  border:1.5px solid ${changed ? 'var(--accent)' : 'var(--paper-3)'}">
+        <div style="font-size:.7rem;color:var(--ink-soft);margin-bottom:6px">${e.label}</div>
+        <div style="font-family:var(--mono);font-size:.78rem;color:var(--ink-soft);
+                    text-decoration:${changed ? 'line-through' : 'none'}">${fmtRaw(e.raw)}</div>
+        <div style="font-family:var(--mono);font-size:1rem;font-weight:700;
+                    color:${changed ? 'var(--accent)' : 'var(--ink)'}">
+          ${fmtRaw(rounded)}
+          ${changed ? `<span style="font-size:.7rem;color:${arrowClr};font-weight:400;margin-left:4px">${arrow} ${fmtRaw(Math.abs(diff))}</span>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleRounding(enabled) {
+  _roundEnabled = enabled;
+  saveRoundingConfig();
+  refreshSidebar();
+  // Update toggle visuals without full re-render
+  const track = document.getElementById('round-track');
+  const thumb = document.getElementById('round-thumb');
+  const thresholdBlock = document.querySelector('[id="round-threshold"]')?.closest('div[style*="opacity"]') ||
+    document.getElementById('round-threshold')?.parentElement?.parentElement;
+  if (track) track.style.background = enabled ? 'var(--accent)' : 'var(--paper-3)';
+  if (thumb) thumb.style.left = enabled ? '23px' : '3px';
+  // Update threshold row opacity
+  const thRow = document.getElementById('round-threshold')?.closest('div[style*="border-radius"]');
+  if (thRow) thRow.style.opacity = enabled ? '1' : '0.45';
+  if (thRow) thRow.style.pointerEvents = enabled ? '' : 'none';
+  // Refresh preview
+  const preview = document.getElementById('round-preview');
+  if (preview) preview.innerHTML = buildRoundPreview();
+}
+
+function previewRounding() {
+  const val = parseInt(document.getElementById('round-threshold')?.value) || 400;
+  _roundThreshold = val;
+  const preview = document.getElementById('round-preview');
+  if (preview) preview.innerHTML = buildRoundPreview();
+}
+
+function applyRoundingConfig() {
+  const val = parseInt(document.getElementById('round-threshold')?.value);
+  if (!val || val < 1 || val > 999) { showToast('Umbral debe estar entre 1 y 999'); return; }
+  _roundThreshold = val;
+  saveRoundingConfig();
+  refreshSidebar();
+  showToast('Configuración de redondeo guardada ✓');
+}
 
 function showToast(msg) {
   let t = document.getElementById('alg-toast');
@@ -3888,6 +4055,7 @@ function showToast(msg) {
       <button class="settings-tab active" onclick="switchSettingsTab('equipo',this)">👥 Equipo</button>
       <button class="settings-tab" onclick="switchSettingsTab('datos',this)">🗂 Datos guardados</button>
       <button class="settings-tab" onclick="switchSettingsTab('formulas',this)">📐 Fórmulas</button>
+      <button class="settings-tab" onclick="switchSettingsTab('params',this)">🎛 Parámetros</button>
     </div>
     <div class="settings-body" id="settings-body"></div>
   </div>
