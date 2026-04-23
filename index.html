@@ -58,6 +58,13 @@
   header nav button.active, header nav button:hover {
     background: rgba(255,255,255,.1); color: #fff; border-color: rgba(255,255,255,.4);
   }
+  .cfg-btn {
+    background: transparent; border: 1px solid rgba(255,255,255,.15);
+    color: rgba(255,255,255,.7); padding: 6px 14px; border-radius: 30px;
+    font-family: var(--sans); font-size: .8rem; cursor: pointer;
+    transition: all .2s; margin-left: 8px;
+  }
+  .cfg-btn:hover { background: rgba(255,255,255,.1); color: #fff; border-color: rgba(255,255,255,.4); }
 
   /* ── LAYOUT ── */
   .app { display: grid; grid-template-columns: 1fr 360px; min-height: calc(100vh - 60px); }
@@ -742,7 +749,7 @@
     <button onclick="showTab('templates')">📁 Templates</button>
     <button onclick="showTab('historial')">📋 Historial</button>
   </nav>
-  <button onclick="openSettings()" style="background:transparent;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.7);padding:6px 14px;border-radius:30px;font-family:var(--sans);font-size:.8rem;cursor:pointer;transition:all .2s;margin-left:8px" onmouseover="this.style.background='rgba(255,255,255,.1)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,.7)'">⚙ Config</button>
+  <button class="cfg-btn" onclick="openSettings()">⚙ Config</button>
 </header>
 
 <div class="app" id="app-builder">
