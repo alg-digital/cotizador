@@ -1321,6 +1321,30 @@ function teamBreakdown(params) {
 const fmtRaw = n => '$' + n.toLocaleString('es-MX', {minimumFractionDigits:0, maximumFractionDigits:0});
 const fmtPct = n => (n*100).toFixed(1) + '%';
 
+// ── Default params config ───────────────────────────────
+const PARAMS_KEY = 'alg_params_v1';
+let _defaultOverhead = 1.2;
+let _defaultUtil     = 0.5;
+
+function loadParamsConfig() {
+  try {
+    const s = JSON.parse(localStorage.getItem(PARAMS_KEY));
+    if (s) {
+      if (s.overhead != null) {
+        _defaultOverhead = s.overhead;
+        document.getElementById('p-overhead').value = s.overhead;
+      }
+      if (s.util != null) {
+        _defaultUtil = s.util;
+        document.getElementById('p-util').value = s.util;
+      }
+    }
+  } catch {}
+}
+function saveParamsConfig(overhead, util) {
+  localStorage.setItem(PARAMS_KEY, JSON.stringify({ overhead, util }));
+}
+
 // ── Rounding config ──────────────────────────────────────
 const ROUND_KEY = 'alg_rounding_v1';
 let _roundEnabled   = false;
@@ -3253,8 +3277,10 @@ function importHistorialFile(event) {
 // FEATURE 1: AUTOCOMPLETAR ACTIVIDADES
 // ══════════════════════════════════════════════════════
 function getActivitySuggestions() {
-  const map = new Map();
+  const map  = new Map();
+  const excl = getAcExclusions();
   const add = (desc, hrs) => {
+    if (excl && excl.has((desc||"").trim().toLowerCase())) return; // excluded
     if (!desc || desc.trim().length < 2) return;
     const key = desc.trim().toLowerCase();
     if (!map.has(key)) map.set(key, { desc: desc.trim(), hrs: hrs || 0, count: 0 });
@@ -3705,13 +3731,16 @@ function buildDatosTab() {
     return [...s].map(k => `<span style="font-size:.62rem;background:var(--paper-2);color:var(--ink-soft);padding:1px 5px;border-radius:10px;margin-left:3px">${labels[k]||k}</span>`).join('');
   };
 
+  const excl      = getAcExclusions();
+  const excl_count = excl.size;
+
   const acRows = entries.length ? entries.map((e, i) => `
     <div class="ac-item">
       <input type="checkbox" id="ac-${i}" data-key="${e.desc.replace(/"/g,'&quot;')}">
       <label for="ac-${i}" class="ac-item-text" style="cursor:pointer">
         ${e.desc}${srcBadge(e.sources)}
       </label>
-      <span class="ac-item-count">${e.count}×</span>
+      <span class="ac-item-count" title="Aparece ${e.count} veces en total (servicios + templates + historial)">${e.count}×</span>
     </div>`).join('') :
     `<div style="padding:20px;text-align:center;color:var(--ink-soft);font-size:.82rem">No hay actividades capturadas aún</div>`;
 
@@ -3731,7 +3760,10 @@ function buildDatosTab() {
     <div style="border:1.5px solid var(--paper-3);border-radius:6px;overflow:hidden;max-height:260px;overflow-y:auto">
       ${acRows}
     </div>
-    <div style="font-size:.72rem;color:var(--ink-soft);margin-top:6px">${entries.length} actividades únicas en el pool</div>
+    <div style="font-size:.72rem;color:var(--ink-soft);margin-top:6px">
+    ${entries.length} actividades únicas en el pool &nbsp;·&nbsp; ${excl_count} oculta${excl_count!==1?'s':''}
+    ${excl_count > 0 ? '<button onclick="clearAcExclusions()" style="margin-left:6px;font-size:.7rem;color:var(--accent);background:none;border:none;cursor:pointer;font-family:var(--sans);text-decoration:underline">Restaurar ocultas</button>' : ''}
+  </div>
 
     <hr class="formula-divider">
 
@@ -3757,39 +3789,42 @@ function buildDatosTab() {
     </div>`;
 }
 
+function clearAcExclusions() {
+  if (!confirm('¿Restaurar todas las actividades ocultas al autocompletar?')) return;
+  localStorage.removeItem(AC_EXCLUDE_KEY);
+  showToast('Actividades restauradas ✓');
+  renderSettingsTab('datos');
+}
+
 function acSelectAll() {
   document.querySelectorAll('.ac-item input[type=checkbox]').forEach(c => c.checked = true);
 }
 function acSelectNone() {
   document.querySelectorAll('.ac-item input[type=checkbox]').forEach(c => c.checked = false);
 }
+// Exclusion list for autocomplete
+const AC_EXCLUDE_KEY = 'alg_ac_exclude_v1';
+function getAcExclusions() {
+  try { return new Set(JSON.parse(localStorage.getItem(AC_EXCLUDE_KEY) || '[]')); }
+  catch { return new Set(); }
+}
+function saveAcExclusions(set) {
+  localStorage.setItem(AC_EXCLUDE_KEY, JSON.stringify([...set]));
+}
+
 function acDeleteSelected() {
   const toDelete = new Set(
     [...document.querySelectorAll('.ac-item input[type=checkbox]:checked')]
       .map(c => c.dataset.key.toLowerCase())
   );
   if (!toDelete.size) { showToast('Selecciona al menos una actividad'); return; }
-  if (!confirm(`¿Eliminar ${toDelete.size} actividad(es) seleccionada(s) del pool de sugerencias?\n\nEsto no borra las actividades de los servicios o historial, solo deja de sugerirlas.`)) return;
+  if (!confirm(`¿Ocultar ${toDelete.size} actividad(es) del autocompletar?\n\nNo se borrará nada de tus templates ni historial — solo dejarán de aparecer como sugerencias.`)) return;
 
-  // Remove from templates
-  try {
-    const tmpls = JSON.parse(localStorage.getItem(LS_KEY)||'[]');
-    tmpls.forEach(t => (t.phases||[]).forEach(ph => {
-      ph.activities = (ph.activities||[]).filter(a => !toDelete.has((a.desc||'').toLowerCase()));
-    }));
-    localStorage.setItem(LS_KEY, JSON.stringify(tmpls));
-  } catch {}
+  const excl = getAcExclusions();
+  toDelete.forEach(k => excl.add(k));
+  saveAcExclusions(excl);
 
-  // Remove from historial activities
-  try {
-    const hist = JSON.parse(localStorage.getItem(HIST_KEY)||'[]');
-    hist.forEach(h => (h.services||[]).forEach(svc => (svc.phases||[]).forEach(ph => {
-      ph.activities = (ph.activities||[]).filter(a => !toDelete.has((a.desc||'').toLowerCase()));
-    })));
-    localStorage.setItem(HIST_KEY, JSON.stringify(hist));
-  } catch {}
-
-  showToast(`${toDelete.size} actividad(es) eliminada(s) del pool ✓`);
+  showToast(`${toDelete.size} actividad(es) ocultada(s) del autocompletar ✓`);
   renderSettingsTab('datos');
 }
 
@@ -3875,6 +3910,7 @@ function buildFormulasTab() {
 // ── Load team on startup ──────────────────────────────
 loadTeamFromStorage();
 loadRoundingConfig();
+loadParamsConfig();
 
 
 // ══════════════════════════════════════════════════════
@@ -3886,6 +3922,54 @@ function buildParamsTab() {
   const ex3 = _roundEnabled ? roundPrice(30250) : 30250;
 
   return `
+    <!-- ── Default params ── -->
+    <div class="settings-section-title">Parámetros por defecto</div>
+    <div style="font-size:.78rem;color:var(--ink-mid);margin-bottom:16px;line-height:1.6">
+      Estos valores se cargan automáticamente al abrir el cotizador. Puedes ajustarlos por cotización
+      desde el sidebar sin cambiar el default.
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">
+      <div style="background:var(--paper);border-radius:8px;padding:16px 18px;border:1.5px solid var(--paper-3)">
+        <div style="font-weight:700;font-size:.88rem;margin-bottom:3px">Overhead ALG</div>
+        <div style="font-size:.75rem;color:var(--ink-soft);margin-bottom:10px">
+          Multiplicador sobre costo directo. 1.2 = +20% de gastos fijos.
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="number" id="cfg-overhead" value="${_defaultOverhead}"
+            min="1" max="5" step="0.05"
+            style="width:90px;padding:8px 10px;border:1.5px solid var(--paper-3);
+                   border-radius:6px;font-family:var(--mono);font-size:.95rem;text-align:right">
+          <span style="font-size:.78rem;color:var(--ink-soft)">× costo directo</span>
+        </div>
+      </div>
+      <div style="background:var(--paper);border-radius:8px;padding:16px 18px;border:1.5px solid var(--paper-3)">
+        <div style="font-weight:700;font-size:.88rem;margin-bottom:3px">Factor utilidad</div>
+        <div style="font-size:.75rem;color:var(--ink-soft);margin-bottom:10px">
+          % de ganancia sobre precio de venta. 0.5 = 50% de utilidad.
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="number" id="cfg-util" value="${_defaultUtil}"
+            min="0.01" max="0.99" step="0.05"
+            style="width:90px;padding:8px 10px;border:1.5px solid var(--paper-3);
+                   border-radius:6px;font-family:var(--mono);font-size:.95rem;text-align:right">
+          <span style="font-size:.78rem;color:var(--ink-soft)" id="cfg-util-pct">
+            = ${(_defaultUtil*100).toFixed(0)}% utilidad
+          </span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:28px">
+      <button onclick="applyParamsConfig()" style="padding:8px 18px;background:var(--accent);color:#fff;
+        border:none;border-radius:6px;cursor:pointer;font-family:var(--sans);font-size:.82rem;font-weight:600">
+        💾 Guardar como default
+      </button>
+      <button onclick="resetParamsConfig()" style="padding:8px 14px;border:1.5px solid var(--paper-3);
+        border-radius:6px;background:transparent;cursor:pointer;font-family:var(--sans);font-size:.82rem;color:var(--ink-soft)">
+        ↺ Restablecer (1.2 / 0.5)
+      </button>
+    </div>
+    <hr class="formula-divider" style="margin-bottom:20px">
+
     <div class="settings-section-title">Redondeo de precios por servicio</div>
     <div style="font-size:.78rem;color:var(--ink-mid);margin-bottom:18px;line-height:1.6">
       Cuando está activo, cada precio por servicio se redondea al millar más cercano según el umbral.
@@ -3954,6 +4038,33 @@ function buildParamsTab() {
       (utilidad, costo total, etc.). El redondeo solo afecta la <strong>presentación</strong>
       del precio de venta.
     </div>`;
+}
+
+function applyParamsConfig() {
+  const overhead = parseFloat(document.getElementById('cfg-overhead')?.value);
+  const util     = parseFloat(document.getElementById('cfg-util')?.value);
+  if (!overhead || overhead < 1 || overhead > 5)    { showToast('Overhead debe estar entre 1 y 5'); return; }
+  if (!util     || util < 0.01  || util > 0.99)     { showToast('Utilidad debe estar entre 0.01 y 0.99'); return; }
+  _defaultOverhead = overhead;
+  _defaultUtil     = util;
+  saveParamsConfig(overhead, util);
+  // Apply to current sidebar inputs
+  document.getElementById('p-overhead').value = overhead;
+  document.getElementById('p-util').value     = util;
+  refreshSidebar();
+  showToast(`Default guardado: overhead ${overhead} · utilidad ${(util*100).toFixed(0)}% ✓`);
+}
+
+function resetParamsConfig() {
+  if (!confirm('¿Restablecer overhead a 1.2 y utilidad a 0.5?')) return;
+  _defaultOverhead = 1.2;
+  _defaultUtil     = 0.5;
+  localStorage.removeItem(PARAMS_KEY);
+  document.getElementById('p-overhead').value = 1.2;
+  document.getElementById('p-util').value     = 0.5;
+  refreshSidebar();
+  renderSettingsTab('params');
+  showToast('Parámetros restablecidos ✓');
 }
 
 function buildRoundPreview() {
