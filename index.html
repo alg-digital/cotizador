@@ -2015,10 +2015,28 @@ function _doExportCliente(cotNum) {
   ${serviciosHTML}
   <div class="section-label">Resumen financiero</div>
   <div class="totals-section">
-    <div class="totals-grid">
-      <div class="total-cell"><label>Total servicios (s/IVA)</label><div class="amount">${fmt(tot.precioFinal)}</div><div class="sub-note">Descuento aplicado</div></div>
-      <div class="total-cell"><label>IVA 16%</label><div class="amount" style="font-size:1.1rem;color:#4a4d58">${fmt(iva)}</div><div class="sub-note">Desglosado en factura</div></div>
-      <div class="total-cell"><label>Total con IVA</label><div class="amount gold">${fmt(conIva)}</div><div class="sub-note">Precio final de la propuesta</div></div>
+    <div class="totals-grid" style="grid-template-columns:${params.dcto > 0 ? '1fr 1fr 1fr 1fr' : '1fr 1fr 1fr'}">
+      ${params.dcto > 0 ? `
+      <div class="total-cell">
+        <label>Precio s/descuento</label>
+        <div class="amount" style="font-size:1.1rem;color:#9499aa;text-decoration:line-through">${fmt(tot.precioLleno)}</div>
+        <div class="sub-note">Antes del descuento</div>
+      </div>` : ''}
+      <div class="total-cell">
+        <label>${params.dcto > 0 ? `Total c/descuento (${(params.dcto*100).toFixed(0)}% off)` : 'Total servicios'} (s/IVA)</label>
+        <div class="amount">${fmt(tot.precioFinal)}</div>
+        ${params.dcto > 0 ? `<div class="sub-note" style="color:#c0392b">Ahorro: ${fmt(tot.precioLleno - tot.precioFinal)}</div>` : '<div class="sub-note">&nbsp;</div>'}
+      </div>
+      <div class="total-cell">
+        <label>IVA 16%</label>
+        <div class="amount" style="font-size:1.1rem;color:#4a4d58">${fmt(iva)}</div>
+        <div class="sub-note">Desglosado en factura</div>
+      </div>
+      <div class="total-cell">
+        <label>Total con IVA</label>
+        <div class="amount gold">${fmt(conIva)}</div>
+        <div class="sub-note">Precio final de la propuesta</div>
+      </div>
     </div>
   </div>
   <div class="section-label">Plan de pagos</div>
