@@ -810,7 +810,10 @@
 
   <!-- ── SIDEBAR ── -->
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar-title">Resumen de cotización</div>
+    <div class="sidebar-title" style="display:flex;justify-content:space-between;align-items:center">
+      <span>Resumen de cotización</span>
+      <span id="sync-status" style="font-size:.58rem;font-weight:500;letter-spacing:.04em;transition:color .3s"></span>
+    </div>
 
     <!-- Parámetros -->
     <div class="sidebar-params">
@@ -1639,10 +1642,10 @@ function showTab(tab) {
     renderBreakdown();
   } else if (tab === 'templates') {
     document.getElementById('app-templates').style.display = 'block';
-    renderTemplatesView();
+    pullTemplatesRemote().then(() => renderTemplatesView());
   } else if (tab === 'historial') {
     document.getElementById('app-historial').style.display = 'block';
-    renderHistorial();
+    pullHistorialRemote().then(() => renderHistorial());
   }
 }
 
@@ -2527,6 +2530,129 @@ refreshSidebar();
 // ══════════════════════════════════════════════════════
 // TEMPLATES
 // ══════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════
+// SUPABASE — Templates + Historial compartidos
+// ══════════════════════════════════════════════════════
+const SB_URL = 'https://lxddbmrljowhaowwxcug.supabase.co';
+const SB_KEY = 'sb_publishable_cCZA5ZxfvevzQJD2AosI0w_SwYVOOTv';
+const SB_H   = {
+  'apikey':        SB_KEY,
+  'Authorization': 'Bearer ' + SB_KEY,
+  'Content-Type':  'application/json',
+};
+
+async function sbGet(table, qs = '') {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?${qs}`, { headers: SB_H });
+  if (!r.ok) throw new Error(`${table} GET ${r.status}`);
+  return r.json();
+}
+async function sbUpsert(table, body) {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}`, {
+    method:  'POST',
+    headers: { ...SB_H, 'Prefer': 'resolution=merge-duplicates,return=representation' },
+    body:    JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error(`${table} UPSERT ${r.status}: ${await r.text()}`);
+  return r.json();
+}
+async function sbDelete(table, filter) {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?${filter}`, {
+    method: 'DELETE', headers: SB_H,
+  });
+  if (!r.ok) throw new Error(`${table} DELETE ${r.status}`);
+}
+
+// ── Indicador de sincronización ───────────────────────
+function setSyncStatus(state) {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  const MAP = {
+    saving: { text: '↑ Guardando…',           color: 'rgba(255,255,255,.45)' },
+    ok:     { text: '✓ Sincronizado',          color: 'rgba(100,220,130,.85)' },
+    error:  { text: '✗ Sin conexión (local)',  color: 'rgba(255,120,120,.75)' },
+    idle:   { text: '',                        color: 'transparent' },
+  };
+  const s = MAP[state] || MAP.idle;
+  el.textContent  = s.text;
+  el.style.color  = s.color;
+  if (state === 'ok') setTimeout(() => setSyncStatus('idle'), 2500);
+}
+
+// ── TEMPLATES remote ──────────────────────────────────
+async function pushTemplatesRemote(arr) {
+  setSyncStatus('saving');
+  try {
+    // Replace-all: delete everything then re-insert
+    await sbDelete('templates', 'id=neq.00000000-0000-0000-0000-000000000000').catch(()=>{});
+    if (arr.length > 0) {
+      await sbUpsert('templates', arr.map(t => ({
+        id:         crypto.randomUUID(),
+        data:       t,
+        created_at: t.savedAt || new Date().toISOString(),
+      })));
+    }
+    localStorage.setItem(LS_KEY, JSON.stringify(arr));
+    setSyncStatus('ok');
+  } catch(e) {
+    console.warn('Templates remote save failed:', e.message);
+    localStorage.setItem(LS_KEY, JSON.stringify(arr));
+    setSyncStatus('error');
+  }
+}
+
+async function pullTemplatesRemote() {
+  setSyncStatus('saving');
+  try {
+    const rows = await sbGet('templates', 'order=created_at.desc');
+    const arr  = rows.map(r => r.data);
+    if (arr.length > 0) localStorage.setItem(LS_KEY, JSON.stringify(arr));
+    setSyncStatus('ok');
+  } catch(e) {
+    console.warn('Templates remote pull failed:', e.message);
+    setSyncStatus('error');
+  }
+}
+
+// ── HISTORIAL remote ──────────────────────────────────
+async function pushHistorialEntry(entry) {
+  setSyncStatus('saving');
+  try {
+    await sbUpsert('historial', [{ id: entry.id, data: entry, saved_at: entry.savedAt || new Date().toISOString() }]);
+    setSyncStatus('ok');
+  } catch(e) {
+    console.warn('Historial entry push failed:', e.message);
+    setSyncStatus('error');
+  }
+}
+
+async function deleteHistorialRemote(id) {
+  try { await sbDelete('historial', `id=eq.${id}`); } catch(e) { console.warn('Historial delete failed:', e.message); }
+}
+
+async function updateHistorialStatusRemote(id, newStatus) {
+  try {
+    const rows = await sbGet('historial', `id=eq.${id}`);
+    if (rows.length) {
+      const entry = { ...rows[0].data, id: rows[0].id, status: newStatus };
+      await sbUpsert('historial', [{ id, data: entry, saved_at: rows[0].saved_at }]);
+    }
+  } catch(e) { console.warn('Status update failed:', e.message); }
+}
+
+async function pullHistorialRemote() {
+  setSyncStatus('saving');
+  try {
+    const rows = await sbGet('historial', 'order=saved_at.desc');
+    const arr  = rows.map(r => ({ ...r.data, id: r.id }));
+    if (arr.length > 0) localStorage.setItem(HIST_KEY, JSON.stringify(arr));
+    setSyncStatus('ok');
+  } catch(e) {
+    console.warn('Historial remote pull failed:', e.message);
+    setSyncStatus('error');
+  }
+}
+
 const LS_KEY = 'alg_templates_v1';
 let _pendingSvcId = null;
 let _tmplFilter   = 'all';
@@ -2537,6 +2663,7 @@ function getTemplates() {
 }
 function saveTemplates(arr) {
   localStorage.setItem(LS_KEY, JSON.stringify(arr));
+  pushTemplatesRemote(arr);   // async — syncs to Supabase in background
 }
 
 // ── Open modal to name & level the template ──────────────
@@ -3011,6 +3138,7 @@ function confirmSaveHistorial() {
   const hist = getHistorial();
   hist.unshift(snapshot);
   saveHistorial(hist);
+  pushHistorialEntry(snapshot);   // sync to Supabase
   closeHistModal();
   showToast(`Cotización "${ref}" guardada en historial ✓`);
 }
@@ -3088,6 +3216,7 @@ function deleteFromHistorial(id) {
   const entry = hist.find(h => h.id === id);
   if (!entry || !confirm(`¿Eliminar la cotización "${entry.ref}" del historial?`)) return;
   saveHistorial(hist.filter(h => h.id !== id));
+  deleteHistorialRemote(id);   // sync to Supabase
   renderHistorial();
 }
 
@@ -3098,6 +3227,7 @@ function updateHistorialStatus(id, newStatus) {
   if (!entry) return;
   entry.status = newStatus;
   saveHistorial(hist);
+  updateHistorialStatusRemote(id, newStatus);   // sync to Supabase
   renderHistorial();
 }
 
