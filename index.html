@@ -830,6 +830,19 @@
       </div>
     </div>
 
+    <!-- Descuento -->
+    <div style="margin-bottom:16px">
+      <div class="summary-block-title">Descuento</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="number" id="p-dcto" value="0" min="0" max="100" step="1"
+          style="width:68px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
+                 color:#fff;font-family:var(--mono);font-size:.9rem;padding:6px 10px;
+                 border-radius:8px;text-align:right"
+          oninput="refreshSidebar()">
+        <span style="font-size:.78rem;color:rgba(255,255,255,.45)">% sobre precio lleno</span>
+      </div>
+    </div>
+
     <!-- Service summaries -->
     <div class="summary-block" id="sb-services">
       <div class="summary-block-title">Por servicio</div>
@@ -891,7 +904,8 @@
     </div>
 
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
-      <button class="btn-export" onclick="exportAgencia()" style="background:var(--gold);color:var(--ink)">⬇ PDF Agencia (interno)</button>
+      <button class="btn-export" onclick="exportCliente()" style="background:#fff;color:var(--ink)">⬇ PDF Cliente</button>
+      <button class="btn-export" onclick="exportAgencia()" style="background:var(--accent);color:#fff">⬇ PDF Agencia (interno)</button>
       <div style="height:1px;background:rgba(255,255,255,.12);margin:4px 0"></div>
       <button class="btn-export" onclick="saveToHistorial()" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.25)">
         💾 Guardar en Historial
@@ -1229,7 +1243,7 @@ function getParams() {
   return {
     overhead: parseFloat(document.getElementById('p-overhead').value) || 1.2,
     util:     parseFloat(document.getElementById('p-util').value) || 0.5,
-    dcto:     0,
+    dcto:     (parseFloat(document.getElementById('p-dcto')?.value) || 0) / 100,
     dcto2:    0,
   };
 }
@@ -1989,6 +2003,7 @@ function _doExportCliente(cotNum) {
         <div class="meta-item"><label>Preparado por</label><span>${prep||'—'}</span></div>
         <div class="meta-item"><label>Válido hasta</label><span>${fmtDate(rawValid)}</span></div>
         <div class="meta-item"><label>No. Cotización</label><span style="font-family:'DM Mono',monospace;font-weight:400;font-size:11px">${cotNum}</span></div>
+        ${params.dcto > 0 ? `<div class="meta-item"><label>Descuento</label><span style="color:#c0392b">${(params.dcto*100).toFixed(0)}%</span></div>` : ''}
       </div>
     </div>
   </div>
@@ -2033,7 +2048,7 @@ function _doExportCliente(cotNum) {
     <div class="banking-left">
       <div class="bank-title">Transferencia bancaria</div>
       <div class="bank-row"><span class="k">Banco</span><span class="v">BBVA Bancomer</span></div>
-      <div class="bank-row"><span class="k">Titular</span><span class="v">ALG Digital S. de R.L. de C.V.</span></div>
+      <div class="bank-row"><span class="k">Titular</span><span class="v">Algoritmo Design SAPI de CV</span></div>
       <div class="bank-row"><span class="k">No. de cuenta</span><span class="v">0110598291</span></div>
       <div class="clabe-box"><div class="clabe-label">CLABE interbancaria</div><div class="clabe-num">012580001105982912</div></div>
     </div>
