@@ -886,10 +886,6 @@
       <div class="pp-result" id="pp-result">
         <div class="pp-item"><span class="k">Precio total</span><span class="v" id="pp-total">$0</span></div>
         <div class="pp-item"><span class="k">No. de pagos</span><span class="v" id="pp-n">1</span></div>
-        <div class="pp-item" id="pp-disc-row">
-          <span class="k">Dcto. pago único (5%)</span>
-          <span class="v" id="pp-disc">$0</span>
-        </div>
         <div class="pp-item" style="border-top:1px solid rgba(255,255,255,.1);padding-top:6px;margin-top:2px">
           <span class="k" style="color:#fff;font-weight:600">Monto por pago</span>
           <span class="v" style="color:var(--gold);font-weight:700" id="pp-monto">$0</span>
@@ -1620,21 +1616,9 @@ function setPP(n) {
 }
 
 function refreshPaymentPlan(precioFinal) {
-  const discRow = document.getElementById('pp-disc-row');
-  const DISC_UNICO = 0.05;
-  if (ppMonths === 1) {
-    const withDisc = precioFinal * (1 - DISC_UNICO);
-    document.getElementById('pp-total').textContent = fmt(withDisc);
-    document.getElementById('pp-n').textContent = '1';
-    document.getElementById('pp-disc').textContent = fmt(precioFinal * DISC_UNICO);
-    document.getElementById('pp-monto').textContent = fmt(withDisc);
-    discRow.style.display = '';
-  } else {
-    document.getElementById('pp-total').textContent = fmt(precioFinal);
-    document.getElementById('pp-n').textContent = ppMonths;
-    discRow.style.display = 'none';
-    document.getElementById('pp-monto').textContent = fmt(precioFinal / ppMonths);
-  }
+  document.getElementById('pp-total').textContent = fmt(precioFinal);
+  document.getElementById('pp-n').textContent = ppMonths;
+  document.getElementById('pp-monto').textContent = fmt(precioFinal / ppMonths);
 }
 
 // ══════════════════════════════════════════════════════
@@ -1860,9 +1844,6 @@ function _doExportCliente(cotNum) {
   const conIva   = tot.precioFinal + iva;
   const mes      = ppMonths > 0 ? tot.precioFinal / ppMonths : tot.precioFinal;
   const mesIva   = mes * 1.16;
-  const DISC_UNICO = 0.05;
-  const pagoUnico  = conIva * (1 - DISC_UNICO);
-
   const today = rawFecha ? new Date(rawFecha + 'T12:00:00') : new Date();
   const schedDates = Array.from({length: ppMonths}, (_, i) => {
     const d = new Date(today);
@@ -2047,10 +2028,7 @@ function _doExportCliente(cotNum) {
       <div class="pp-row"><span class="k">Monto por pago (s/IVA)</span><span class="v">${fmt(mes)}</span></div>
       <div class="pp-row"><span class="k">IVA por pago</span><span class="v">${fmt(mes*0.16)}</span></div>
       <div class="pp-row hl"><span class="k">Monto por pago (c/IVA)</span><span class="v">${fmt(mesIva)}</span></div>
-      <div style="margin-top:16px;padding-top:12px;border-top:1px solid #e8e8e8;">
-        <div class="pp-section-title" style="margin-bottom:6px">Pago único — descuento 5%</div>
-        <div style="font-size:10px;color:#9499aa;">Liquidación en un pago: <strong style="color:#0c0d0f">${fmt(pagoUnico)}</strong> (c/IVA)</div>
-      </div>
+
     </div>
     <div class="payment-right">
       <div class="pp-section-title">Calendario tentativo</div>
